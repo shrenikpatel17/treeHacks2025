@@ -74,6 +74,11 @@ export default function Dashboard() {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [groupName, setGroupName] = useState("");
+  const [connectionCoordinate, setConnectionCoordinate] = useState("");
+  const [substationCoordinate, setSubstationCoordinate] = useState("");
+
   useEffect(() => {
     if (chatContainerRef.current) {
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -270,6 +275,52 @@ export default function Dashboard() {
         .join(' '); // Join back into a single string
   };
 
+  const handleCreateGroup = async() => {
+  
+      const newGroup = {
+          userID: user._id,
+          name: groupName,
+          connectionCoordinate: connectionCoordinate,
+          substationCoordinate: substationCoordinate,
+      };
+  
+      try {
+          const response = await fetch('/api/groups', {
+            method: 'POST',
+            body: JSON.stringify(newGroup),
+          });
+    
+          if (!response.ok) {
+            throw new Error('Failed to create group');
+          }
+    
+          const data = await response.json();
+          console.log(data)
+    
+          if (response.ok) {
+            dispatch(
+                authActions.addGroupToUser(data.data._id)
+            )
+            }
+
+            const response2 = await fetch('/api/elasticLine', {
+              method: 'POST',
+              body: JSON.stringify({ connectionCoordinate, substationCoordinate, groupId: data.data._id, groupName: groupName }),
+            });
+
+            console.log(response2);
+
+        } catch (error) {
+          console.error('Error creating group', error);
+        } 
+  
+      setIsGroupModalOpen(false);
+      setGroupName("");
+      setConnectionCoordinate("");
+      setSubstationCoordinate("");
+      };
+
+
   return (
    <>
         <div className="relative w-screen h-screen">
@@ -277,7 +328,12 @@ export default function Dashboard() {
 
             {/* Main Content Area */}
             <div className="flex flex-col flex-1 mr-4">
-                <h1 className="text-2xl font-bold font-mono text-green-900 mb-4">ISO Dashboard</h1>
+                <div className="flex items-center justify-between mb-4">
+                    <h1 className="text-2xl font-bold font-mono text-green-900">ISO Dashboard</h1>
+                    <button onClick={() => setIsGroupModalOpen(true)} className="mt-0 w-1/6 bg-dark-green text-white font-mono py-2 rounded-xl shadow-md">
+                        Start New Group
+                    </button>
+                </div>
 
                 {/* Groups Grid */}
                 <div className="flex-1 overflow-y-auto pr-4 mt-4">
@@ -486,6 +542,22 @@ export default function Dashboard() {
                 </div>
             </div>
         )}
+
+        {isGroupModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="bg-white p-6 rounded-xl shadow-lg w-1/3">
+                <h2 className="text-lg font-mono text-green-900 mb-4">Propose New Group</h2>
+                <input type="text" placeholder="Group Name" className="w-full font-mono p-2 border border-gray-300 rounded mb-2" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
+                <input type="text" placeholder="Connection Coordinate" className="w-full font-mono p-2 border border-gray-300 rounded mb-2" value={connectionCoordinate} onChange={(e) => setConnectionCoordinate(e.target.value)} />
+                <input type="text" placeholder="Substation Coordinate" className="w-full font-mono p-2 border border-gray-300 rounded mb-2" value={substationCoordinate} onChange={(e) => setSubstationCoordinate(e.target.value)} />
+
+                <div className="flex justify-end space-x-2">
+                    <button onClick={() => setIsGroupModalOpen(false)} className="bg-gray-100 font-mono hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl">Cancel</button>
+                    <button onClick={handleCreateGroup} className="bg-dark-green font-mono hover:bg-text-green text-white px-4 py-2 rounded-xl">Create Group</button>
+                </div>
+            </div>
+        </div>
+    )}
    </>
   );
 }

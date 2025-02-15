@@ -6,12 +6,14 @@ import mongoose from 'mongoose';
 
 export async function POST( req: Request ) {
     try {
-        const { userID, name } = await req.json();
+        const { userID, name, connectionCoordinate, substationCoordinate } = await req.json();
         
         await connectMongoDB();
 
         var newGroupObject = {
             name: name,
+            connectionCoordinate: connectionCoordinate,
+            substationCoordinate: substationCoordinate,
         };
 
         const newGroup = await Group.create(newGroupObject);

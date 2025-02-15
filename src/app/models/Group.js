@@ -6,6 +6,14 @@ const GroupSchema = new Schema(
       type: String, 
       required: true,
     },
+    connectionCoordinate: {
+      type: String, 
+      required: true,
+    },
+    substationCoordinate: {
+      type: String, 
+      required: true,
+    },
     projects: {
       type: Array,
       default: [],
