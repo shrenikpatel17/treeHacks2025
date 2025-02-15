@@ -237,10 +237,10 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-start">
-        <nav className="bg-transparent border border-dark-green rounded-full px-8 py-2 flex space-x-8 text-green-900 font-mono">
-          <button className="hover:underline">Home</button>
-          <button className="hover:underline">Projects</button>
-          <button className="hover:underline">Groups</button>
+        <nav className="bg-transparent border border-dark-green rounded-full px-8 py-2 flex space-x-8 text-green-900 font-mono justify-center">
+          <button onClick={() => router.push("/dashboard")} className="hover:underline">Home</button>
+          <button onClick={() => router.push("/projects")} className="hover:underline">Projects</button>
+          <button onClick={() => router.push("/groups")} className="hover:underline">Groups</button>
         </nav>
       </div>
 
@@ -291,7 +291,7 @@ export default function Dashboard() {
             />
             <button 
                 type="submit"
-                className="bg-dark-green text-white p-2 rounded-xl hover:bg-opacity-90"
+                className="bg-dark-green font-mono text-white p-2 rounded-xl hover:bg-opacity-90"
             >
                 Send
             </button>
