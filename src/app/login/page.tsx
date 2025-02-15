@@ -1,13 +1,14 @@
 'use client';
 import React, { useState } from 'react';
 import Image from 'next/image';
-
+import { authActions } from '../state/reducers/authSlice';
+import { useSelector, useDispatch } from 'react-redux';
 import { useRouter } from "next/navigation";
 
 
 const SignIn: React.FC = () => {
   const router = useRouter();
-
+  const dispatch = useDispatch();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -30,14 +31,14 @@ const SignIn: React.FC = () => {
     const loggedIn = await loggedInResponse.json();
     console.log(loggedIn);
     if (loggedIn.token) {
-    //   dispatch(
-    //     authActions.setLogin({
-    //       user: loggedIn.user,
-    //       token: loggedIn.token,
-    //     })
-    //   );
+      dispatch(
+        authActions.setLogin({
+          user: loggedIn.user,
+          token: loggedIn.token,
+        })
+      );
       e.target.reset();
-      router.push("/eligibilityTable");
+      router.push("/dashboard");
     }
     else{
       console.log(loggedIn.msg);
@@ -102,7 +103,7 @@ const SignIn: React.FC = () => {
             <div>
               <button
                 type="submit"
-                className="flex w-full justify-center rounded-2xl bg-theme-blue px-3 py-1.5 text-sm font-RalewayMedium leading-6 text-white shadow-sm hover:bg-hover-blue focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                className="flex w-full justify-center rounded-2xl bg-black px-3 py-1.5 text-sm font-RalewayMedium leading-6 text-white shadow-sm hover:bg-hover-blue focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
               >
                 Sign in
               </button>

@@ -3,28 +3,36 @@ import mongoose, { Document, model, Model, Schema } from "mongoose";
 const UserSchema = new Schema(
   {
     firstName: {
-      type: String, // Added type specification
+      type: String, 
       required: true,
-      minlength: 2, // Changed `min` to `minlength`
-      maxlength: 50, // Changed `max` to `maxlength`
+      minlength: 2, 
+      maxlength: 50, 
     },
     lastName: {
-      type: String, // Added type specification
+      type: String, 
       required: true,
-      minlength: 2, // Changed `min` to `minlength`
-      maxlength: 50, // Changed `max` to `maxlength`
+      minlength: 2, 
+      maxlength: 50, 
     },
     email: {
-      type: String, // Added type specification
+      type: String, 
       required: true,
-      maxlength: 50, // Changed `max` to `maxlength`
+      maxlength: 50, 
       unique: true,
     },
     password: {
-      type: String, // Added type specification
+      type: String, 
       required: true,
-      minlength: 5, // Changed `min` to `minlength`
+      minlength: 5, 
     },
+    projects: {
+      type: Array, 
+      default: [],
+    },
+    groups: {
+      type: Array,
+      default: [],
+    }
   },
   { timestamps: true }
 );

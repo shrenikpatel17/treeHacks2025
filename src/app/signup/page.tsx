@@ -10,11 +10,10 @@ const GetStarted: React.FC = () => {
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [npi, setNpi] = useState('');
 
 
   const handleSubmit = async () => {
-    if (firstName === '' || lastName === '' || email === '' || password === '' || npi === '') {
+    if (firstName === '' || lastName === '' || email === '' || password === '') {
         return;
     }
     
@@ -29,7 +28,6 @@ const GetStarted: React.FC = () => {
             lastName: lastName,
             email: email,
             password: password,
-            npi: npi
         }),
         });
 
@@ -129,36 +127,19 @@ const GetStarted: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="npi" className="block text-sm font-RalewayRegular leading-6 text-theme-blue">
-                NPI
-              </label>
-              <div className="mt-2">
-                <input
-                  id="npi"
-                  name="npi"
-                  type="npi"
-                  autoComplete="current-password"
-                  required
-                  value={npi}
-                  onChange={(e) => setNpi(e.target.value)}
-                  className="p-2 bg-transparent block w-full rounded-2xl border-0 py-1.5 text-theme-blue shadow-sm ring-1 ring-inset ring-theme-blue placeholder:text-gray-400 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
+            <button
+              onClick={handleSubmit}
+              className="z-20 flex w-full justify-center rounded-2xl bg-black px-3 py-1.5 text-sm hover:cursor-pointer font-RalewayMedium leading-6 text-white shadow-sm hover:bg-hover-blue focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            >
+              Sign up
+            </button>
 
-            <div>
-              <a
-                onClick={handleSubmit}
-                className="flex w-full justify-center rounded-2xl bg-theme-blue px-3 py-1.5 text-sm font-RalewayMedium leading-6 text-white shadow-sm hover:bg-hover-blue focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                Sign up
-              </a>
             </div>
           </form>
 
           <p className="mt-10 text-center text-sm text-theme-blue font-RalewayMedium">
             Already have an account?{' '}
-            <a href="/login" className="font-RalewayBold leading-6 text-theme-blue hover:text-hover-blue">
+            <a href="/login" className="font-RalewayBold leading-6 text-black hover:text-black hover:underline">
               Sign In
             </a>
           </p>

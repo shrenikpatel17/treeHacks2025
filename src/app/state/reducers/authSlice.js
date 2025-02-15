@@ -10,7 +10,6 @@ const initialState = {
     lastName: "",
     email: "",
     password: "",
-    courses: [],
   },
   token: "",
 };
@@ -32,9 +31,16 @@ export const authSlice = createSlice({
         lastName: "",
         email: "",
         password: "",
-        courses: [],
+        projects: [],
+        groups: [],
       };
       state.token = "";
+    },
+    addProjectToUser: (state, action) => {
+      state.user.projects.push(action.payload);
+    },
+    addGroupToUser: (state, action) => {
+      state.user.groups.push(action.payload);
     },
   },
 });
