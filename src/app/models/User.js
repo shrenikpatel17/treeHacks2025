@@ -32,6 +32,10 @@ const UserSchema = new Schema(
     groups: {
       type: Array,
       default: [],
+    },
+    iso: {
+      type: Boolean,
+      default: false,
     }
   },
   { timestamps: true }

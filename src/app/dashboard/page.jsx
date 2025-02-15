@@ -217,6 +217,25 @@ export default function Dashboard() {
     //   setGroupName("");
     //   };
 
+  const getStatusColor = (status) => {
+    const colors = {
+        pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+        approved: 'bg-green-100 text-green-800 border-green-200',
+        rejected: 'bg-red-100 text-red-800 border-red-200',
+        in_progress: 'bg-blue-100 text-blue-800 border-blue-200',
+        completed: 'bg-purple-100 text-purple-800 border-purple-200'
+    };
+    return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200';
+  };
+
+  const formatStatus = (status) => {
+    return status
+        .replace(/_/g, ' ')
+        .split(' ')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+  };
+
   return (
    <>
    <div className="relative w-screen h-screen">
@@ -228,11 +247,21 @@ export default function Dashboard() {
             {userProjects.map((project) => (
                 <button
                     key={project._id}
-                    className="bg-light-color font-mono border border-dark-green h-36 w-full rounded-xl shadow-sm cursor-pointer hover:bg-light-hover-color focus:outline-none"
+                    className="bg-light-color font-mono border border-dark-green h-36 w-full rounded-xl shadow-sm cursor-pointer hover:bg-light-hover-color focus:outline-none relative"
                 >
-                    {project.name}
-                    <div>
-                    {project.metadata.parameter1}
+                    {/* Status Tag */}
+                    <div className={`absolute top-2 right-2 px-2 py-1 rounded-lg text-xs font-medium border ${getStatusColor(project.metadata.status)}`}>
+                        {formatStatus(project.metadata.status)}
+                    </div>
+
+                    {/* Project Name */}
+                    <div className="absolute top-4 left-4">
+                        <h4 className="font-semibold text-green-900">{project.name}</h4>
+                    </div>
+
+                    {/* Project Details */}
+                    <div className="absolute bottom-4 left-4 text-sm text-gray-600">
+                        {project.metadata.parameter1}
                     </div>
                 </button>
             ))}
