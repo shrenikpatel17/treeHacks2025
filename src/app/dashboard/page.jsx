@@ -49,18 +49,40 @@ export default function Dashboard() {
 
   // STATES FOR NEW PROJECT CREATION
   const [projectName, setProjectName] = useState("");
-  const [parameter1, setParameter1] = useState("");
-  const [parameter2, setParameter2] = useState("");
-  const [parameter3, setParameter3] = useState("");
+  const [location, setLocation] = useState("");
+  const [generationType1, setGenerationType1] = useState("");
+  const [generationType2, setGenerationType2] = useState("");
+  const [generationSize1, setGenerationSize1] = useState("");
+  const [generationSize2, setGenerationSize2] = useState("");
+  const [requestedCompletionDate, setRequestedCompletionDate] = useState("");
+  const [budget, setBudget] = useState("");
+
+  const generateCoordinates = async () => {
+    const response = await fetch('/api/generateCoordinates', {
+      method: 'POST',
+      body: JSON.stringify({ userPrompt: location }),
+    });
+
+    const data = await response.json();
+    console.log(data);
+    return data.res;
+  }
 
   const handleCreateProject = async() => {
+    const coordinates = await generateCoordinates();
+
     const newProject = {
         userID: user._id,
         name: projectName,
         metadata: {
-            parameter1,
-            parameter2,
-            parameter3,
+            location: coordinates,
+            generationType1: generationType1,
+            generationType2: generationType2,
+            generationSize1: generationSize1,
+            generationSize2: generationSize2,
+            requestedCompletionDate: requestedCompletionDate,
+            budget: budget,
+            status: "pending",
         },
     };
 
@@ -88,9 +110,13 @@ export default function Dashboard() {
 
     setIsModalOpen(false);
     setProjectName("");
-    setParameter1("");
-    setParameter2("");
-    setParameter3("");
+    setLocation("");
+    setGenerationType1("");
+    setGenerationType2("");
+    setGenerationSize1("");
+    setGenerationSize2("");
+    setRequestedCompletionDate("");
+    setBudget("");
     };
 
   return (
@@ -100,7 +126,7 @@ export default function Dashboard() {
       {/* Sidebar */}
       <div className="w-1/5 mt-16 border border-dark-green rounded-2xl p-4 flex flex-col bg-gradient-to-b from-grad-light via-grad-light to-grad-dark">
         <h2 className="text-lg font-mono text-green-900 mb-4">My Projects</h2>
-        <div className="flex flex-col space-y-4 flex-grow overflow-y-auto max-h-screen">
+        <div className="flex flex-col space-y-4 flex-grow overflow-y-auto max-h-[calc(100vh-4rem)]">
             {userProjects.map((project) => (
                 <button
                     key={project._id}
@@ -135,7 +161,7 @@ export default function Dashboard() {
             className="bg-light-color font-mono border border-dark-green h-36 w-64 rounded-xl shadow-sm cursor-pointer hover:bg-light-hover-color focus:outline-none"
           >
             {project.name}
-            <div>{project.metadata.parameter1}</div>
+            <div>{project.metadata.location}</div>
           </button>
         ))}
       </div>
@@ -158,11 +184,36 @@ export default function Dashboard() {
     {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
             <div className="bg-white p-6 rounded-xl shadow-lg w-1/3">
-                <h2 className="text-lg font-mono text-green-900 mb-4">Create New Project</h2>
+                <h2 className="text-lg font-mono text-green-900 mb-4">Propose New Project</h2>
                 <input type="text" placeholder="Project Name" className="w-full font-mono p-2 border border-gray-300 rounded mb-2" value={projectName} onChange={(e) => setProjectName(e.target.value)} />
-                <input type="text" placeholder="Parameter 1" className="w-full font-mono p-2 border border-gray-300 rounded mb-2" value={parameter1} onChange={(e) => setParameter1(e.target.value)} />
-                <input type="text" placeholder="Parameter 2" className="w-full font-mono p-2 border border-gray-300 rounded mb-2" value={parameter2} onChange={(e) => setParameter2(e.target.value)} />
-                <input type="text" placeholder="Parameter 3" className="w-full font-mono p-2 border border-gray-300 rounded mb-4" value={parameter3} onChange={(e) => setParameter3(e.target.value)} />
+                <input type="text" placeholder="Location" className="w-full font-mono p-2 border border-gray-300 rounded mb-2" value={location} onChange={(e) => setLocation(e.target.value)} />
+                <select className="w-full font-mono p-2 border border-gray-300 rounded mb-2" value={generationType1} onChange={(e) => setGenerationType1(e.target.value)}>
+                    <option value="">Select Generation Type 1</option>
+                    <option value="Solar">Solar</option>
+                    <option value="Wind">Wind</option>
+                    <option value="Battery">Battery</option>
+                    <option value="Hydro">Hydro</option>
+                    <option value="Nuclear">Nuclear</option>
+                    <option value="Biomass">Biomass</option>
+                    <option value="Geothermal">Geothermal</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input type="text" placeholder="Generation Size 1 (MW)" className="w-full font-mono p-2 border border-gray-300 rounded mb-4" value={generationSize1} onChange={(e) => setGenerationSize1(e.target.value)} />
+                <select className="w-full font-mono p-2 border border-gray-300 rounded mb-2" value={generationType2} onChange={(e) => setGenerationType2(e.target.value)}>
+                    <option value="">Select Generation Type 2</option>
+                    <option value="Solar">Solar</option>
+                    <option value="Wind">Wind</option>
+                    <option value="Battery">Battery</option>
+                    <option value="Hydro">Hydro</option>
+                    <option value="Nuclear">Nuclear</option>
+                    <option value="Biomass">Biomass</option>
+                    <option value="Geothermal">Geothermal</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input type="text" placeholder="Generation Size 2 (MW)" className="w-full font-mono p-2 border border-gray-300 rounded mb-4" value={generationSize2} onChange={(e) => setGenerationSize2(e.target.value)} />
+                <input type="text" placeholder="Requested Completion Date" className="w-full font-mono p-2 border border-gray-300 rounded mb-4" value={requestedCompletionDate} onChange={(e) => setRequestedCompletionDate(e.target.value)} />
+                <input type="text" placeholder="Budget (USD)" className="w-full font-mono p-2 border border-gray-300 rounded mb-4" value={budget} onChange={(e) => setBudget(e.target.value)} />
+
                 <div className="flex justify-end space-x-2">
                     <button onClick={() => setIsModalOpen(false)} className="bg-gray-100 font-mono hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl">Cancel</button>
                     <button onClick={handleCreateProject} className="bg-dark-green font-mono hover:bg-text-green text-white px-4 py-2 rounded-xl">Create Project</button>
