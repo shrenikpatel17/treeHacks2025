@@ -5,7 +5,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { authActions } from '../state/reducers/authSlice';
 import { useRouter } from "next/navigation";
-
+  
 
 export default function Dashboard() {
     const user = useSelector((state) => state.auth.user);
@@ -119,6 +119,16 @@ export default function Dashboard() {
 
     const data = await response.json();
     console.log(data);
+
+    const [lat, long] = data.res.split("|")[0]
+    .match(/[-+]?\d*\.?\d+/g)
+    .map(Number);
+        
+    await fetch('/api/elasticGeo', {
+      method: 'POST',
+      body: JSON.stringify({ lat: lat, long: long }),
+    });
+
     return data.res;
   }
 

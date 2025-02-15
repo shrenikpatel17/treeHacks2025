@@ -5,7 +5,11 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { authActions } from '../state/reducers/authSlice';
 import { useRouter } from "next/navigation";
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
+// Register ChartJS components
+ChartJS.register(ArcElement, Tooltip, Legend);
 
 export default function Dashboard() {
     const user = useSelector((state) => state.auth.user);
@@ -67,6 +71,9 @@ export default function Dashboard() {
   const [currentMessage, setCurrentMessage] = useState("");
   const chatContainerRef = useRef(null);
 
+  const [selectedGroup, setSelectedGroup] = useState(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
   useEffect(() => {
     if (chatContainerRef.current) {
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -115,7 +122,105 @@ export default function Dashboard() {
     }
   };
 
+  const handleDetailsClick = (e, group) => {
+    e.stopPropagation(); // Prevent the button click from triggering the parent button
+    setSelectedGroup(group);
+    setIsDetailsModalOpen(true);
+  };
 
+  // Add this function to process group project data
+  const getGroupProjectsData = (group) => {
+    if (!group || !group.projects || !allProjects) return null;
+
+    // Filter projects that belong to this group
+    const groupProjects = allProjects.filter(project => 
+        group.projects.includes(project._id)
+    );
+
+    // Calculate total budget
+    const totalBudget = groupProjects.reduce((sum, project) => 
+        sum + (Number(project.metadata.budget.replace(/,/g, '')) || 0), 0
+    );
+
+    // Aggregate generation types and their capacities
+    const generationData = groupProjects.reduce((acc, project) => {
+        // Process generation type 1
+        if (project.metadata.generationType1) {
+            const type1 = project.metadata.generationType1;
+            const size1 = Number(project.metadata.generationSize1) || 0;
+            acc[type1] = (acc[type1] || 0) + size1;
+        }
+        // Process generation type 2
+        if (project.metadata.generationType2) {
+            const type2 = project.metadata.generationType2;
+            const size2 = Number(project.metadata.generationSize2) || 0;
+            acc[type2] = (acc[type2] || 0) + size2;
+        }
+        return acc;
+    }, {});
+
+    // Prepare data for Chart.js
+    const labels = Object.keys(generationData);
+    const data = Object.values(generationData);
+    const backgroundColor = labels.map(type => getColorForType(type));
+
+    const chartData = {
+        labels: labels,
+        datasets: [{
+            data: data,
+            backgroundColor: backgroundColor,
+            borderColor: backgroundColor.map(color => color.replace('0.8', '1')),
+            borderWidth: 1,
+        }]
+    };
+
+    const chartOptions = {
+        plugins: {
+            legend: {
+                position: 'right',
+                labels: {
+                    font: {
+                        family: 'monospace',
+                        size: 12
+                    },
+                    color: '#065f46' // green-900
+                }
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        const label = context.label || '';
+                        const value = context.raw || 0;
+                        return `${label}: ${value} MW`;
+                    }
+                }
+            }
+        },
+        maintainAspectRatio: false
+    };
+
+    return {
+        totalBudget,
+        chartData,
+        chartOptions,
+        projects: groupProjects
+    };
+  };
+
+  // Add this function to get colors for different generation types
+  const getColorForType = (type) => {
+    const colors = {
+        Solar: 'rgba(255, 215, 0, 0.8)',    // Golden
+        Wind: 'rgba(135, 206, 235, 0.8)',   // Sky Blue
+        Battery: 'rgba(128, 128, 128, 0.8)', // Gray
+        Hydro: 'rgba(65, 105, 225, 0.8)',   // Royal Blue
+        Nuclear: 'rgba(255, 107, 107, 0.8)', // Coral
+        Biomass: 'rgba(144, 238, 144, 0.8)', // Light Green
+        Geothermal: 'rgba(255, 140, 0, 0.8)', // Dark Orange
+        Other: 'rgba(221, 160, 221, 0.8)'    // Plum
+    };
+    return colors[type] || 'rgba(153, 153, 153, 0.8)';
+  };
 
   return (
    <>
@@ -139,8 +244,15 @@ export default function Dashboard() {
                                 key={group._id}
                                 className="bg-light-color font-mono border border-dark-green h-44 w-full rounded-xl shadow-sm cursor-pointer hover:bg-light-hover-color focus:outline-none p-4 text-left relative"
                             >
-                                <h3 className="text-lg font-semibold text-green-900">{group.name}</h3>
-                                {/* Add more group details here if needed */}
+                                <h3 className="text-lg font-semibold text-green-900 absolute top-4 left-4">{group.name}</h3>
+                                <p className="text-sm text-gray-600 absolute top-4 right-4">Num projects: {group.projects.length}</p>
+                                <p className="text-sm text-gray-600 absolute bottom-4 left-4">Remaining capacity: {group.maxCapacity} MW</p>
+                                <button 
+                                    onClick={(e) => handleDetailsClick(e, group)}
+                                    className="bg-dark-green absolute bottom-4 right-4 font-mono text-white p-2 rounded-xl hover:bg-opacity-90 ml-auto"
+                                >
+                                    Details
+                                </button>
                             </button>
                         ))}
                     </div>
@@ -189,6 +301,77 @@ export default function Dashboard() {
             </div>
         </div>
         </div>
+
+        {isDetailsModalOpen && selectedGroup && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div className="bg-white p-8 rounded-xl shadow-lg w-3/4 max-h-[80vh] overflow-y-auto">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-mono text-green-900">{selectedGroup.name}</h2>
+                        <button 
+                            onClick={() => setIsDetailsModalOpen(false)}
+                            className="text-gray-500 hover:text-gray-700"
+                        >
+                            <span className="text-2xl">×</span>
+                        </button>
+                    </div>
+
+                    {(() => {
+                        const groupData = getGroupProjectsData(selectedGroup);
+                        if (!groupData) return <p>No project data available</p>;
+
+                        return (
+                            <div className="grid grid-cols-2 gap-8">
+                                {/* Left Column - Summary Data */}
+                                <div className="space-y-6">
+                                    <div className="bg-light-color p-4 rounded-xl border border-dark-green">
+                                        <h3 className="text-lg font-bold font-mono text-green-900 mb-2">Group Summary</h3>
+                                        <p className="font-mono text-gray-600">Total Projects: {groupData.projects.length}</p>
+                                        <p className="font-mono text-gray-600">Total Budget: ${groupData.totalBudget.toLocaleString()}</p>
+                                        <p className="font-mono text-gray-600">Location: {selectedGroup.location || "Multiple Locations"}</p>
+                                    </div>
+
+                                    {/* Pie Chart */}
+                                    <div className="bg-light-color p-4 rounded-xl border border-dark-green">
+                                        <h3 className="text-lg font-bold font-mono text-green-900 mb-4">Generation Mix</h3>
+                                        <div className="h-64">
+                                            <Pie 
+                                                data={groupData.chartData}
+                                                options={groupData.chartOptions}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Right Column - Project List */}
+                                <div className="bg-light-color p-4 rounded-xl border border-dark-green">
+                                    <h3 className="text-lg font-mono font-bold text-green-900 mb-4">Projects</h3>
+                                    <div className="space-y-4">
+                                        {groupData.projects.map(project => (
+                                            <div key={project._id} className="bg-white p-4 rounded-lg border border-dark-green">
+                                                <h4 className="font-mono text-green-900 font-semibold">{project.name}</h4>
+                                                <p className="text-sm font-mono text-gray-600">Budget: ${Number(project.metadata.budget.replace(/,/g, '')).toLocaleString()}</p>
+                                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                                    {project.metadata.generationType1 && (
+                                                        <p className="text-sm font-mono text-gray-600">
+                                                            {project.metadata.generationType1}: {project.metadata.generationSize1} MW
+                                                        </p>
+                                                    )}
+                                                    {project.metadata.generationType2 && (
+                                                        <p className="text-sm font-mono text-gray-600">
+                                                            {project.metadata.generationType2}: {project.metadata.generationSize2} MW
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </div>
+            </div>
+        )}
    </>
   );
 }
