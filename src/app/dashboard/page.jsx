@@ -116,25 +116,32 @@ export default function Dashboard() {
       method: 'POST',
       body: JSON.stringify({ userPrompt: location }),
     });
-
+ 
+ 
     const data = await response.json();
     console.log(data);
-
-    const [lat, long] = data.res.split("|")[0]
-    .match(/[-+]?\d*\.?\d+/g)
-    .map(Number);
-        
-    await fetch('/api/elasticGeo', {
-      method: 'POST',
-      body: JSON.stringify({ lat: lat, long: long }),
-    });
-
+ 
+ 
     return data.res;
   }
+ 
+  const generateGeoPoint = async(location, projectId) => {
+    const [lat, long] = location.split("|")[0]
+    .match(/[-+]?\d*\.?\d+/g)
+    .map(Number);
+ 
+    const response = await fetch('/api/elasticGeo', {
+      method: 'POST',
+      body: JSON.stringify({ lat: lat, long: long, projectId: projectId }),
+    });
+ 
+    return response;
+  }
+ 
 
   const handleCreateProject = async() => {
     const coordinates = await generateCoordinates();
-
+ 
     const newProject = {
         userID: user._id,
         name: projectName,
@@ -149,29 +156,31 @@ export default function Dashboard() {
             status: "pending",
         },
     };
-
+ 
+ 
     try {
         const response = await fetch('/api/projects', {
           method: 'POST',
           body: JSON.stringify(newProject),
         });
-  
-        if (!response.ok) {
+         if (!response.ok) {
           throw new Error('Failed to create project');
         }
-  
-        const data = await response.json();
+         const data = await response.json();
         console.log(data)
-  
-        if (response.ok) {
+         if (response.ok) {
           dispatch(
               authActions.addProjectToUser(data.data._id)
           )
-      }
+        }
+        generateGeoPoint(data.data.metadata.location, data.data._id);
+ 
+ 
       } catch (error) {
         console.error('Error creating project', error);
-      } 
-
+      }
+ 
+ 
     setIsModalOpen(false);
     setProjectName("");
     setLocation("");
@@ -182,6 +191,7 @@ export default function Dashboard() {
     setRequestedCompletionDate("");
     setBudget("");
     };
+ 
 
 
     // const handleCreateGroup = async() => {
