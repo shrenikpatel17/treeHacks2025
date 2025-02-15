@@ -18,6 +18,10 @@ const GroupSchema = new Schema(
       type: Array,
       default: [],
     },
+    maxCapacity: {
+      type: Number,
+      default: 1500,
+    },
   },
   { timestamps: true }
 );
