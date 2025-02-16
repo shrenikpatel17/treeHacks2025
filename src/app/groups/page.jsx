@@ -35,6 +35,10 @@ export default function Dashboard() {
             const data = await response.json();
             if (response.ok) {
                 setAllProjects(data.data);
+                // Set the most recent project
+                if (data.data.length > 0) {
+                    setMostRecentProject(data.data[data.data.length - 1]);
+                }
 
                 const userProjects = data.data.filter(project => 
                     user.projects.includes(project._id)
@@ -79,6 +83,9 @@ export default function Dashboard() {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [orderedGroups, setOrderedGroups] = useState([]);
+
+  // Add this state to track the most recent project
+  const [mostRecentProject, setMostRecentProject] = useState(null);
 
   useEffect(() => {
     if (allProjects && allProjects.length > 0 && allGroups && allGroups.length > 0) {
@@ -631,6 +638,52 @@ const getGroupProjectsData = (group) => {
     setIsDetailsModalOpen(true);
   };
 
+  const handleEnterClick = async (e, group) => {
+    e.stopPropagation(); // Prevent event bubbling
+
+    if (!mostRecentProject) {
+        alert("No project available to add to group");
+        return;
+    }
+
+    try {
+        // Update the group with the new project
+        const response = await fetch(`/api/groups/${group._id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                projectId: mostRecentProject._id
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update group');
+        }
+
+        // Update local state
+        setAllGroups(prevGroups => 
+            prevGroups.map(g => {
+                if (g._id === group._id) {
+                    return {
+                        ...g,
+                        projects: [...g.projects, mostRecentProject._id]
+                    };
+                }
+                return g;
+            })
+        );
+
+        // Show success message
+        alert(`Project ${mostRecentProject.name} added to group ${group.name}`);
+
+    } catch (error) {
+        console.error('Error updating group:', error);
+        alert('Failed to add project to group');
+    }
+  };
+
   const parseProjectCoordinates = (locationString) => {
     if (!locationString) return null;
     try {
@@ -688,6 +741,12 @@ const getGroupProjectsData = (group) => {
                                     <h3 className="text-lg font-semibold text-green-900 absolute top-4 left-4">{group.name}</h3>
                                     <p className="text-sm text-gray-600 absolute top-4 right-4">Num projects: {group.projects.length}</p>
                                     <p className="text-sm text-gray-600 absolute bottom-4 left-4">Remaining capacity: {group.maxCapacity} MW</p>
+                                    <button 
+                                        onClick={(e) => handleEnterClick(e, group)}
+                                        className="bg-transparent border border-dark-green absolute bottom-4 right-28 font-mono text-dark-green p-2 rounded-xl hover:bg-opacity-90 ml-auto hover:bg-green-900 hover:text-white"
+                                    >
+                                        Enter
+                                    </button>
                                     <button 
                                         onClick={(e) => handleDetailsClick(e, group)}
                                         className="bg-dark-green absolute bottom-4 right-4 font-mono text-white p-2 rounded-xl hover:bg-opacity-90 ml-auto"

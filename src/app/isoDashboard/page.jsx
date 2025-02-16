@@ -592,61 +592,63 @@ export default function Dashboard() {
                                         {allProjects
                                             .filter(project => group.projects.includes(project._id))
                                             .map(project => (
-                                                <div 
-                                                    key={project._id}
-                                                    className="bg-white border border-dark-green rounded-lg p-4 shadow-sm w-80 flex-shrink-0 relative"
-                                                >
-                                                    {/* Status Tag */}
-                                                    <div className={`absolute top-2 right-2 px-2 py-1 rounded-lg text-xs font-medium border ${getStatusColor(project.metadata.status)}`}>
-                                                        {formatStatus(project.metadata.status)}
-                                                    </div>
+                                                <div key={project._id}>
+                                                    <div className="bg-white border border-dark-green rounded-lg p-4 shadow-sm w-80 flex-shrink-0 relative">
+                                                        {/* Status Tag */}
+                                                        <div className={`absolute top-2 right-2 px-2 py-1 rounded-lg text-xs font-medium border ${getStatusColor(project.metadata.status)}`}>
+                                                            {formatStatus(project.metadata.status)}
+                                                        </div>
 
-                                                    <h4 className="font-semibold text-green-900 mb-6">{project.name}</h4>
-                                                    
-                                                    {/* Project Details */}
-                                                    <div className="space-y-2 text-sm">
-                                                        <p className="text-gray-600">
-                                                            <b>Budget:</b> ${Number(project.metadata.budget.replace(/,/g, '')).toLocaleString()}
-                                                        </p>
-                                                        <p className="text-gray-600">
-                                                            <b>Location:</b> {project.metadata.location.split('|')[0]}
-                                                        </p>
+                                                        <h4 className="font-semibold text-green-900 mb-6">{project.name}</h4>
                                                         
-                                                        {/* Generation Types */}
-                                                        <div className="space-y-1">
-                                                            {project.metadata.generationType1 && (
-                                                                <p className="text-gray-600">
-                                                                    <b>{project.metadata.generationType1}:</b> {project.metadata.generationSize1} MW
-                                                                </p>
-                                                            )}
-                                                            {project.metadata.generationType2 && (
-                                                                <p className="text-gray-600">
-                                                                    <b>{project.metadata.generationType2}:</b> {project.metadata.generationSize2} MW
-                                                                </p>
-                                                            )}
-                                                        </div>
+                                                        {/* Project Details */}
+                                                        <div className="space-y-2 text-sm">
+                                                            <p className="text-gray-600">
+                                                                <b>Budget:</b> ${Number(project.metadata.budget.replace(/,/g, '')).toLocaleString()}
+                                                            </p>
+                                                            <p className="text-gray-600">
+                                                                <b>Location:</b> {project.metadata.location.split('|')[0]}
+                                                            </p>
+                                                            
+                                                            {/* Generation Types */}
+                                                            <div className="space-y-1">
+                                                                {project.metadata.generationType1 && (
+                                                                    <p className="text-gray-600">
+                                                                        <b>{project.metadata.generationType1}:</b> {project.metadata.generationSize1} MW
+                                                                    </p>
+                                                                )}
+                                                                {project.metadata.generationType2 && (
+                                                                    <p className="text-gray-600">
+                                                                        <b>{project.metadata.generationType2}:</b> {project.metadata.generationSize2} MW
+                                                                    </p>
+                                                                )}
+                                                            </div>
 
-                                                        {/* Completion Date */}
-                                                        <p className="text-gray-600">
-                                                            <b>Projected Completion:</b> {project.metadata.requestedCompletionDate}
-                                                        </p>
+                                                            {/* Completion Date */}
+                                                            <p className="text-gray-600">
+                                                                <b>Projected Completion:</b> {project.metadata.requestedCompletionDate}
+                                                            </p>
 
-                                                        {/* Status Selector */}
-                                                        <div className="mt-4 sticky bottom-0">
-                                                            <label className="block text-gray-700 mb-1"><b>Change Status:</b></label>
-                                                            <select
-                                                                value={project.metadata.status}
-                                                                onChange={(e) => handleStatusChange(project._id, e.target.value)}
-                                                                className="w-full p-2 border border-dark-green rounded-lg bg-light-color text-green-900 focus:outline-none focus:ring-2 focus:ring-dark-green"
-                                                            >
-                                                                <option value="pending">Pending</option>
-                                                                <option value="approved">Approved</option>
-                                                                <option value="rejected">Rejected</option>
-                                                                <option value="in_progress">In Progress</option>
-                                                                <option value="completed">Completed</option>
-                                                            </select>
+                                                            {/* Status Selector */}
+                                                            <div className="mt-4 sticky bottom-0">
+                                                                <label className="block text-gray-700 mb-1"><b>Change Status:</b></label>
+                                                                <select
+                                                                    value={project.metadata.status}
+                                                                    onChange={(e) => handleStatusChange(project._id, e.target.value)}
+                                                                    className="w-full p-2 border border-dark-green rounded-lg bg-light-color text-green-900 focus:outline-none focus:ring-2 focus:ring-dark-green"
+                                                                >
+                                                                    <option value="pending">Pending</option>
+                                                                    <option value="approved">Approved</option>
+                                                                    <option value="rejected">Rejected</option>
+                                                                    <option value="in_progress">In Progress</option>
+                                                                    <option value="completed">Completed</option>
+                                                                </select>
+                                                            </div>
                                                         </div>
                                                     </div>
+                                                    <p className="text-gray-600 font-mono mt-2 mb-4">
+                                                        <b>Bid Contribution:</b> ${project.metadata.transmissionBid}
+                                                    </p>
                                                 </div>
                                             ))}
                                     </div>
