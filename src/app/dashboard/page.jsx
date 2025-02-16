@@ -5,6 +5,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { authActions } from '../state/reducers/authSlice';
 import { useRouter } from "next/navigation";
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
   
 
 export default function Dashboard() {
@@ -62,6 +64,144 @@ export default function Dashboard() {
   const [messages, setMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState("");
   const chatContainerRef = useRef(null);
+
+  // Add map refs after other state declarations
+  const mapContainer = useRef(null);
+  const map = useRef(null);
+
+  // Add this function to parse coordinates from project location
+  const parseProjectCoordinates = (locationString) => {
+    if (!locationString) return null;
+    try {
+        const coordinates = locationString.split("|")[0]
+            .match(/[-+]?\d*\.?\d+/g)
+            .map(Number);
+        return coordinates;
+    } catch (error) {
+        console.error("Error parsing coordinates:", error);
+        return null;
+    }
+};
+
+  // Add this useEffect for map initialization
+  useEffect(() => {
+    mapboxgl.accessToken = 'pk.eyJ1Ijoic2hyZW5pa3BhdGVsIiwiYSI6ImNtNzZ5c2djaDEyY2gybXBybDhlMXY2bmMifQ.Gse4PXbgo5TydviHbdsM9Q';
+    
+    console.log(mapContainer.current)
+
+    // Check if mapContainer.current is valid before initializing the map
+    if (mapContainer.current) {
+        map.current = new mapboxgl.Map({
+            container: mapContainer.current,
+            style: 'mapbox://styles/shrenikpatel/cm76zveu300a901rf2lbdhgsu', // Add a default style
+            center: [-122.1, 37.4], // Add a default center
+            zoom: 7 // Add a default zoom level
+        });
+
+        // Add navigation controls
+        map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+        // Add project points when map loads
+        map.current.on('load', () => {
+            // Add transmission lines source and layer
+            map.current.addSource('Electric__Power_Transmission_-abcl2z', {
+                type: 'vector',
+                url: 'mapbox://shrenikpatel.97uttm42' 
+            });
+
+            map.current.addSource('substationsWithCoordinates_1-98toln', {
+                type: 'vector',
+                url: 'mapbox://shrenikpatel.8qz3rtqa' 
+            });
+
+            // Add a source for project points
+            map.current.addSource('project-points', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: allProjects
+                        .map(project => {
+                            const coords = parseProjectCoordinates(project.metadata.location);
+                            if (!coords) return null;
+                            return {
+                                type: 'Feature',
+                                geometry: {
+                                    type: 'Point',
+                                    coordinates: [coords[1], coords[0]] // [longitude, latitude]
+                                },
+                                properties: {
+                                    title: project.name,
+                                    description: `${project.metadata.generationType1}: ${project.metadata.generationSize1} MW`
+                                }
+                            };
+                        })
+                        .filter(feature => feature !== null)
+                }
+            });
+
+            // Add transmission lines layer
+            map.current.addLayer({
+                'id': 'transmission-lines-layer',
+                'type': 'line',
+                'source': 'Electric__Power_Transmission_-abcl2z',
+                'source-layer': 'Electric__Power_Transmission_-abcl2z',
+                'paint': {
+                    'line-color': '#088',
+                    'line-width': 2
+                }
+            });
+
+            // Add substations layer
+            map.current.addLayer({
+                'id': 'substation-points-layer',
+                'type': 'circle',
+                'source': 'substationsWithCoordinates_1-98toln',
+                'source-layer': 'substationsWithCoordinates_1-98toln',
+                'paint': {
+                    'circle-color': '#088',
+                    'circle-radius': 2
+                }
+            });
+
+            // Add project points layer
+            map.current.addLayer({
+                'id': 'project-points-layer',
+                'type': 'circle',
+                'source': 'project-points',
+                'paint': {
+                    'circle-radius': 6,
+                    'circle-color': '#ff0000',
+                    'circle-opacity': 0.7,
+                    'circle-stroke-width': 2,
+                    'circle-stroke-color': '#ffffff'
+                }
+            });
+
+            // Add popup on hover
+            map.current.on('mouseenter', 'project-points-layer', (e) => {
+                const coordinates = e.features[0].geometry.coordinates.slice();
+                const { title, description } = e.features[0].properties;
+
+                console.log(e.features)
+                
+                new mapboxgl.Popup()
+                    .setLngLat(coordinates)
+                    .setHTML(`<h3>${title}</h3><p>${description}</p>`)
+                    .addTo(map.current);
+            });
+
+            map.current.on('mouseleave', 'project-points-layer', () => {
+                const popups = document.getElementsByClassName('mapboxgl-popup');
+                if (popups[0]) popups[0].remove();
+            });
+        });
+    } else {
+        console.error("Map container is not available.");
+    }
+
+    // Cleanup on unmount
+    return () => map.current?.remove();
+  }, [allProjects]);
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -193,7 +333,6 @@ export default function Dashboard() {
     };
  
 
-
     // const handleCreateGroup = async() => {
   
     //   const newGroup = {
@@ -295,15 +434,10 @@ export default function Dashboard() {
 
       {/* Centered Projects (Absolute Positioning) */}
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-wrap justify-center space-x-4 space-y-4">
-        {allProjects.map((project) => (
-          <button
-            key={project._id}
-            className="bg-light-color font-mono border border-dark-green h-36 w-64 rounded-xl shadow-sm cursor-pointer hover:bg-light-hover-color focus:outline-none"
-          >
-            {project.name}
-            <div>{project.metadata.location}</div>
-          </button>
-        ))}
+        <div 
+            ref={mapContainer} 
+            className="map-container w-[1000px] h-[800px]"
+        />
       </div>
 
       {/* Updated Query Panel with Chat UI */}

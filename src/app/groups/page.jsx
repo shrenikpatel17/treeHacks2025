@@ -7,6 +7,8 @@ import { authActions } from '../state/reducers/authSlice';
 import { useRouter } from "next/navigation";
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import mapboxgl from 'mapbox-gl';
+import 'mapbox-gl/dist/mapbox-gl.css';
 
 // Register ChartJS components
 ChartJS.register(ArcElement, Tooltip, Legend);
@@ -74,6 +76,124 @@ export default function Dashboard() {
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
+  const mapContainer = useRef(null);
+  const map = useRef(null);
+
+  useEffect(() => {
+    if (!mapContainer.current) return;
+    
+    mapboxgl.accessToken = 'pk.eyJ1Ijoic2hyZW5pa3BhdGVsIiwiYSI6ImNtNzZ5c2djaDEyY2gybXBybDhlMXY2bmMifQ.Gse4PXbgo5TydviHbdsM9Q';
+    
+    map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/shrenikpatel/cm76zveu300a901rf2lbdhgsu',
+        center: [-122.1, 37.4],
+        zoom: 7
+    });
+
+    // Add navigation controls
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+    // Add project points when map loads
+    map.current.on('load', () => {
+        // Add transmission lines source and layer
+        map.current.addSource('Electric__Power_Transmission_-abcl2z', {
+            type: 'vector',
+            url: 'mapbox://shrenikpatel.97uttm42' 
+        });
+
+        map.current.addSource('substationsWithCoordinates_1-98toln', {
+            type: 'vector',
+            url: 'mapbox://shrenikpatel.8qz3rtqa' 
+        });
+
+        // Add a source for project points
+        map.current.addSource('project-points', {
+            type: 'geojson',
+            data: {
+                type: 'FeatureCollection',
+                features: allProjects
+                    .map(project => {
+                        const coords = parseProjectCoordinates(project.metadata.location);
+                        if (!coords) return null;
+                        return {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: [coords[1], coords[0]] // [longitude, latitude]
+                            },
+                            properties: {
+                                title: project.name,
+                                description: `${project.metadata.generationType1}: ${project.metadata.generationSize1} MW`
+                            }
+                        };
+                    })
+                    .filter(feature => feature !== null)
+            }
+        });
+
+        // Add transmission lines layer
+        map.current.addLayer({
+            'id': 'transmission-lines-layer',
+            'type': 'line',
+            'source': 'Electric__Power_Transmission_-abcl2z',
+            'source-layer': 'Electric__Power_Transmission_-abcl2z',
+            'paint': {
+                'line-color': '#088',
+                'line-width': 2
+            }
+        });
+
+        // Add substations layer
+        map.current.addLayer({
+            'id': 'substation-points-layer',
+            'type': 'circle',
+            'source': 'substationsWithCoordinates_1-98toln',
+            'source-layer': 'substationsWithCoordinates_1-98toln',
+            'paint': {
+                'circle-color': '#088',
+                'circle-radius': 2
+            }
+        });
+
+        // Add project points layer
+        map.current.addLayer({
+            'id': 'project-points-layer',
+            'type': 'circle',
+            'source': 'project-points',
+            'paint': {
+                'circle-radius': 6,
+                'circle-color': '#ff0000',
+                'circle-opacity': 0.7,
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#ffffff'
+            }
+        });
+
+        // Add popup on hover
+        map.current.on('mouseenter', 'project-points-layer', (e) => {
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            const { title, description } = e.features[0].properties;
+
+            console.log(e.features)
+            
+            new mapboxgl.Popup()
+                .setLngLat(coordinates)
+                .setHTML(`<h3>${title}</h3><p>${description}</p>`)
+                .addTo(map.current);
+        });
+
+        map.current.on('mouseleave', 'project-points-layer', () => {
+            const popups = document.getElementsByClassName('mapboxgl-popup');
+            if (popups[0]) popups[0].remove();
+        });
+    });
+
+    // Cleanup on unmount
+    return () => map.current?.remove();
+  }, [allProjects]);
+
+
   useEffect(() => {
     if (chatContainerRef.current) {
         chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
@@ -126,6 +246,19 @@ export default function Dashboard() {
     e.stopPropagation(); // Prevent the button click from triggering the parent button
     setSelectedGroup(group);
     setIsDetailsModalOpen(true);
+  };
+
+  const parseProjectCoordinates = (locationString) => {
+    if (!locationString) return null;
+    try {
+        const coordinates = locationString.split("|")[0]
+            .match(/[-+]?\d*\.?\d+/g)
+            .map(Number);
+        return coordinates;
+    } catch (error) {
+        console.error("Error parsing coordinates:", error);
+        return null;
+    }
   };
 
   // Add this function to process group project data
@@ -364,8 +497,16 @@ export default function Dashboard() {
                                                 </div>
                                             </div>
                                         ))}
+                                    <h3 className="text-lg font-bold font-mono text-green-900 mb-4">Map</h3>
+                                    <div className="transform z-20 justify-center space-x-4 space-y-4">
+                                        <div 
+                                            ref={mapContainer} 
+                                            className="map-container w-[400px] h-[200px]"
+                                        />
+                                    </div>
                                     </div>
                                 </div>
+
                             </div>
                         );
                     })()}
