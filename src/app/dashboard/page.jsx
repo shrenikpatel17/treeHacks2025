@@ -115,7 +115,7 @@ export default function Dashboard() {
                 url: 'mapbox://shrenikpatel.8qz3rtqa' 
             });
 
-            map.current.addSource('filtered-updated-capacity-dat-clflrg', {
+            map.current.addSource('Filtered_Updated_Capacity_Dat-clflrg', {
                 type: 'vector',
                 url: 'mapbox://shrenikpatel.3py0eb24' 
             });
@@ -172,11 +172,11 @@ export default function Dashboard() {
             map.current.addLayer({
                 'id': 'capacity-points-layer',
                 'type': 'circle',
-                'source': 'filtered-updated-capacity-dat-clflrg',
-                'source-layer': 'filtered-updated-capacity-dat-clflrg',
+                'source': 'Filtered_Updated_Capacity_Dat-clflrg',
+                'source-layer': 'Filtered_Updated_Capacity_Dat-clflrg',
                 'paint': {
                     'circle-color':  '#5fea1f', 
-                    'circle-radius': 2
+                    'circle-radius': 3
                 }
             });
 

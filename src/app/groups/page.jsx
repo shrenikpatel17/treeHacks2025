@@ -13,6 +13,106 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 // Register ChartJS components
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+const GroupMap = ({ group, projects }) => {
+    const mapContainer = useRef(null);
+    const map = useRef(null);
+
+    useEffect(() => {
+        if (!mapContainer.current || !group) return;
+        
+        mapboxgl.accessToken = 'pk.eyJ1Ijoic2hyZW5pa3BhdGVsIiwiYSI6ImNtNzZ5c2djaDEyY2gybXBybDhlMXY2bmMifQ.Gse4PXbgo5TydviHbdsM9Q';
+        
+        map.current = new mapboxgl.Map({
+            container: mapContainer.current,
+            style: 'mapbox://styles/shrenikpatel/cm76zveu300a901rf2lbdhgsu',
+            center: [-122.1, 37.4],
+            zoom: 7
+        });
+
+        map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+        map.current.on('load', () => {
+            // Create features array with substation and group's projects
+            const features = [];
+            
+            // Add substation point
+            const substationCoords = parseSubstationCoordinate(group.substationCoordinate);
+            console.log("Substation Coords:", substationCoords);
+            
+            if (substationCoords) {
+                features.push({
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Point',
+                        coordinates: substationCoords
+                    },
+                    properties: {
+                        title: `${group.name} Substation`,
+                        description: 'Group Substation',
+                        pointType: 'substation'
+                    }
+                });
+            }
+
+            // Add source and layer
+            map.current.addSource('points', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: features
+                }
+            });
+
+            map.current.addLayer({
+                'id': 'points-layer',
+                'type': 'circle',
+                'source': 'points',
+                'paint': {
+                    'circle-radius': 8,
+                    'circle-color': '#088',
+                    'circle-opacity': 0.7,
+                    'circle-stroke-width': 2,
+                    'circle-stroke-color': '#ffffff'
+                }
+            });
+
+            // Fit bounds to the substation point
+            if (substationCoords) {
+                const bounds = new mapboxgl.LngLatBounds();
+                bounds.extend(substationCoords);
+                map.current.fitBounds(bounds, { 
+                    padding: 50,
+                    maxZoom: 8 // Prevent too much zoom
+                });
+            }
+
+            // Add popup on hover
+            map.current.on('mouseenter', 'points-layer', (e) => {
+                const coordinates = e.features[0].geometry.coordinates.slice();
+                const { title, description } = e.features[0].properties;
+                
+                new mapboxgl.Popup()
+                    .setLngLat(coordinates)
+                    .setHTML(`<h3>${title}</h3><p>${description}</p>`)
+                    .addTo(map.current);
+            });
+
+            map.current.on('mouseleave', 'points-layer', () => {
+                const popups = document.getElementsByClassName('mapboxgl-popup');
+                if (popups[0]) popups[0].remove();
+            });
+        });
+
+        return () => map.current?.remove();
+    }, [group]);
+
+    return (
+        <div 
+            ref={mapContainer} 
+            className="w-full h-[400px] rounded-xl border border-dark-green"
+        />
+    );
+};
 
 export default function Dashboard() {
     const user = useSelector((state) => state.auth.user);
@@ -187,119 +287,130 @@ export default function Dashboard() {
   const mapContainer = useRef(null);
   const map = useRef(null);
 
-//   useEffect(() => {
-//     if (!mapContainer.current) return;
+  // Add this helper function to parse substation coordinates
+  const parseSubstationCoordinate = (coordString) => {
+    if (!coordString) return null;
+    try {
+        const [lat, lon] = coordString.replace(/[()]/g, '').split(',').map(Number);
+        return [lat, lon]; // Return in [longitude, latitude] format for Mapbox
+    } catch (error) {
+        console.error("Error parsing substation coordinate:", error);
+        return null;
+    }
+  };
+
+  // Update the map initialization code
+  useEffect(() => {
+    if (!mapContainer.current) return;
     
-//     mapboxgl.accessToken = 'pk.eyJ1Ijoic2hyZW5pa3BhdGVsIiwiYSI6ImNtNzZ5c2djaDEyY2gybXBybDhlMXY2bmMifQ.Gse4PXbgo5TydviHbdsM9Q';
+    mapboxgl.accessToken = 'pk.eyJ1Ijoic2hyZW5pa3BhdGVsIiwiYSI6ImNtNzZ5c2djaDEyY2gybXBybDhlMXY2bmMifQ.Gse4PXbgo5TydviHbdsM9Q';
     
-//     map.current = new mapboxgl.Map({
-//         container: mapContainer.current,
-//         style: 'mapbox://styles/shrenikpatel/cm76zveu300a901rf2lbdhgsu',
-//         center: [-122.1, 37.4],
-//         zoom: 7
-//     });
+    map.current = new mapboxgl.Map({
+        container: mapContainer.current,
+        style: 'mapbox://styles/shrenikpatel/cm76zveu300a901rf2lbdhgsu',
+        center: [-122.1, 37.4],
+        zoom: 7
+    });
 
-//     // Add navigation controls
-//     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-//     // Add project points when map loads
-//     map.current.on('load', () => {
-//         // Add transmission lines source and layer
-//         map.current.addSource('Electric__Power_Transmission_-abcl2z', {
-//             type: 'vector',
-//             url: 'mapbox://shrenikpatel.97uttm42' 
-//         });
+    map.current.on('load', () => {
+        // Add transmission lines and other sources...
 
-//         map.current.addSource('substationsWithCoordinates_1-98toln', {
-//             type: 'vector',
-//             url: 'mapbox://shrenikpatel.8qz3rtqa' 
-//         });
+        // Add a source for project points and substation points
+        map.current.addSource('all-points', {
+            type: 'geojson',
+            data: {
+                type: 'FeatureCollection',
+                features: [
+                    // Add project points
+                    ...allProjects.map(project => {
+                        const coords = parseProjectCoordinates(project.metadata.location);
+                        if (!coords) return null;
+                        return {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: [coords[1], coords[0]]
+                            },
+                            properties: {
+                                title: project.name,
+                                description: `${project.metadata.generationType1}: ${project.metadata.generationSize1} MW`,
+                                pointType: 'project'
+                            }
+                        };
+                    }).filter(feature => feature !== null),
+                    // Add substation points
+                    ...allGroups.map(group => {
+                        const coords = parseSubstationCoordinate(group.substationCoordinate);
+                        console.log("Coords:", coords);
+                        if (!coords) return null;
+                        return {
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: coords
+                            },
+                            properties: {
+                                title: `${group.name} Substation`,
+                                description: 'Group Substation',
+                                pointType: 'substation'
+                            }
+                        };
+                    }).filter(feature => feature !== null)
+                ]
+            }
+        });
 
-//         // Add a source for project points
-//         map.current.addSource('project-points', {
-//             type: 'geojson',
-//             data: {
-//                 type: 'FeatureCollection',
-//                 features: allProjects
-//                     .map(project => {
-//                         const coords = parseProjectCoordinates(project.metadata.location);
-//                         if (!coords) return null;
-//                         return {
-//                             type: 'Feature',
-//                             geometry: {
-//                                 type: 'Point',
-//                                 coordinates: [coords[1], coords[0]] // [longitude, latitude]
-//                             },
-//                             properties: {
-//                                 title: project.name,
-//                                 description: `${project.metadata.generationType1}: ${project.metadata.generationSize1} MW`
-//                             }
-//                         };
-//                     })
-//                     .filter(feature => feature !== null)
-//             }
-//         });
+        // Add layer for all points
+        map.current.addLayer({
+            'id': 'all-points-layer',
+            'type': 'circle',
+            'source': 'all-points',
+            'paint': {
+                'circle-radius': 6,
+                'circle-color': [
+                    'match',
+                    ['get', 'pointType'],
+                    'project', '#ff0000',
+                    'substation', '#088',
+                    '#ff0000'
+                ],
+                'circle-opacity': 0.7,
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#ffffff'
+            }
+        });
 
-//         // Add transmission lines layer
-//         map.current.addLayer({
-//             'id': 'transmission-lines-layer',
-//             'type': 'line',
-//             'source': 'Electric__Power_Transmission_-abcl2z',
-//             'source-layer': 'Electric__Power_Transmission_-abcl2z',
-//             'paint': {
-//                 'line-color': '#088',
-//                 'line-width': 2
-//             }
-//         });
+        // Fit bounds to include all points
+        const features = map.current.getSource('all-points')._data.features;
+        if (features.length > 0) {
+            const bounds = new mapboxgl.LngLatBounds();
+            features.forEach(feature => {
+                bounds.extend(feature.geometry.coordinates);
+            });
+            map.current.fitBounds(bounds, { padding: 50 });
+        }
 
-//         // Add substations layer
-//         map.current.addLayer({
-//             'id': 'substation-points-layer',
-//             'type': 'circle',
-//             'source': 'substationsWithCoordinates_1-98toln',
-//             'source-layer': 'substationsWithCoordinates_1-98toln',
-//             'paint': {
-//                 'circle-color': '#088',
-//                 'circle-radius': 2
-//             }
-//         });
-
-//         // Add project points layer
-//         map.current.addLayer({
-//             'id': 'project-points-layer',
-//             'type': 'circle',
-//             'source': 'project-points',
-//             'paint': {
-//                 'circle-radius': 6,
-//                 'circle-color': '#ff0000',
-//                 'circle-opacity': 0.7,
-//                 'circle-stroke-width': 2,
-//                 'circle-stroke-color': '#ffffff'
-//             }
-//         });
-
-//         // Add popup on hover
-//         map.current.on('mouseenter', 'project-points-layer', (e) => {
-//             const coordinates = e.features[0].geometry.coordinates.slice();
-//             const { title, description } = e.features[0].properties;
-
-//             console.log(e.features)
+        // Add popup on hover
+        map.current.on('mouseenter', 'all-points-layer', (e) => {
+            const coordinates = e.features[0].geometry.coordinates.slice();
+            const { title, description } = e.features[0].properties;
             
-//             new mapboxgl.Popup()
-//                 .setLngLat(coordinates)
-//                 .setHTML(`<h3>${title}</h3><p>${description}</p>`)
-//                 .addTo(map.current);
-//         });
+            new mapboxgl.Popup()
+                .setLngLat(coordinates)
+                .setHTML(`<h3>${title}</h3><p>${description}</p>`)
+                .addTo(map.current);
+        });
 
-//         map.current.on('mouseleave', 'project-points-layer', () => {
-//             const popups = document.getElementsByClassName('mapboxgl-popup');
-//             if (popups[0]) popups[0].remove();
-//         });
-//     });
+        map.current.on('mouseleave', 'all-points-layer', () => {
+            const popups = document.getElementsByClassName('mapboxgl-popup');
+            if (popups[0]) popups[0].remove();
+        });
+    });
 
-//     // Cleanup on unmount
-//     return () => map.current?.remove();
-//   }, [allProjects]);
+    return () => map.current?.remove();
+}, [allProjects, allGroups]); // Add allGroups as a dependency
 
 const getGroupProjectsData = (group) => {
     if (!group || !group.projects || !allProjects) return null;
@@ -404,7 +515,28 @@ const getGroupProjectsData = (group) => {
 
         // Set up map data when map loads
         map.current.on('load', () => {
-            // Add transmission lines source and layer
+            // Parse the substation coordinates
+            const substationCoords = parseSubstationCoordinate(group.substationCoordinate);
+            
+            // Create a bounds object and extend it with the substation coordinates
+            if (substationCoords) {
+                const bounds = new mapboxgl.LngLatBounds();
+                bounds.extend(substationCoords);
+                
+                // Fit the map to the substation coordinates
+                map.current.fitBounds(bounds, {
+                    padding: 50,
+                    maxZoom: 12 // Prevent too much zoom
+                });
+
+                // Add a marker for the substation
+                new mapboxgl.Marker({ color: '#088' })
+                    .setLngLat(substationCoords)
+                    .setPopup(new mapboxgl.Popup().setHTML(`<h3>${group.name} Substation</h3>`))
+                    .addTo(map.current);
+            }
+
+            // Add your existing layers...
             map.current.addSource('Electric__Power_Transmission_-abcl2z', {
                 type: 'vector',
                 url: 'mapbox://shrenikpatel.97uttm42' 
@@ -413,6 +545,11 @@ const getGroupProjectsData = (group) => {
             map.current.addSource('substationsWithCoordinates_1-98toln', {
                 type: 'vector',
                 url: 'mapbox://shrenikpatel.8qz3rtqa' 
+            });
+
+            map.current.addSource('Filtered_Updated_Capacity_Dat-clflrg', {
+                type: 'vector',
+                url: 'mapbox://shrenikpatel.3py0eb24' 
             });
 
             // Add a source for group's project points
@@ -460,6 +597,17 @@ const getGroupProjectsData = (group) => {
                 'paint': {
                     'circle-color': '#088',
                     'circle-radius': 2
+                }
+            });
+
+            map.current.addLayer({
+                'id': 'capacity-points-layer',
+                'type': 'circle',
+                'source': 'Filtered_Updated_Capacity_Dat-clflrg',
+                'source-layer': 'Filtered_Updated_Capacity_Dat-clflrg',
+                'paint': {
+                    'circle-color':  '#5fea1f', 
+                    'circle-radius': 3
                 }
             });
 
@@ -858,9 +1006,10 @@ const getGroupProjectsData = (group) => {
 
         {isDetailsModalOpen && selectedGroup && (
             <GroupDetailsModal 
-            group={selectedGroup} 
-            onClose={() => setIsDetailsModalOpen(false)} 
-        />)};
+                group={selectedGroup} 
+                onClose={() => setIsDetailsModalOpen(false)} 
+            />
+        )}
 
         {isBidModalOpen && (
             <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">

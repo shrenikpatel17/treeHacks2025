@@ -264,6 +264,11 @@ export default function Dashboard() {
                 url: 'mapbox://shrenikpatel.8qz3rtqa' 
             });
 
+            map.current.addSource('Filtered_Updated_Capacity_Dat-clflrg', {
+                type: 'vector',
+                url: 'mapbox://shrenikpatel.3py0eb24' 
+            });
+
             // Add a source for group's project points
             map.current.addSource('project-points', {
                 type: 'geojson',
@@ -309,6 +314,17 @@ export default function Dashboard() {
                 'paint': {
                     'circle-color': '#088',
                     'circle-radius': 2
+                }
+            });
+
+            map.current.addLayer({
+                'id': 'capacity-points-layer',
+                'type': 'circle',
+                'source': 'Filtered_Updated_Capacity_Dat-clflrg',
+                'source-layer': 'Filtered_Updated_Capacity_Dat-clflrg',
+                'paint': {
+                    'circle-color':  '#5fea1f', 
+                    'circle-radius': 3
                 }
             });
 
