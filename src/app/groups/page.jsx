@@ -182,7 +182,13 @@ export default function Dashboard() {
   function getDistance(lat1, lon1, lat2, lon2) {
     const R = 6371;
     const dLat = (lat2 - lat1) * (Math.PI / 180);
+    console.log("lat1:", lat1);
+    console.log("lat2:", lat2);
+    console.log("dLat:", dLat);
     const dLon = (lon2 - lon1) * (Math.PI / 180);
+    console.log("lon1:", lon1);
+    console.log("lon2:", lon2);
+    console.log("dLon:", dLon);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
       Math.cos(lat1 * (Math.PI / 180)) *
@@ -214,6 +220,9 @@ export default function Dashboard() {
       projectLon = coords.lon;
       locationWeight = weightPart ? parseFloat(weightPart) : 1;
     }
+    console.log("Location weight:", locationWeight);
+    console.log("Project latitude:", projectLat);
+    console.log("Project longitude:", projectLon);
 
     let projectCompletionDate = new Date(projectCompletionStr);
     if (isNaN(projectCompletionDate.getTime())) {
@@ -235,6 +244,7 @@ export default function Dashboard() {
         if (group.capacityLeft < neededCapacity) {
           compatibility += 999999;
         }
+        console.log("compatibility after capacity check:", compatibility);
       }
 
       let groupLat = 0;
@@ -245,8 +255,9 @@ export default function Dashboard() {
         groupLon = parsed.lon;
       }
       const distanceKm = getDistance(projectLat, projectLon, groupLat, groupLon);
-      compatibility += distanceKm * locationWeight;
-
+      console.log("distanceKm:", distanceKm);
+      compatibility += distanceKm * locationWeight*10;
+      console.log("compatibility after distance check:", compatibility);
       return {
         groupId: group._id,
         compatibility
