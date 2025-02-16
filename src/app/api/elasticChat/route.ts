@@ -25,7 +25,7 @@ const getElasticsearchResults = async (query: string) => {
         fuzziness: "AUTO"
       },
     },
-    size: 2, // Increased size for more context
+    size: 1, // Reduced from 2 to 1 to limit context
   };
 
   try {
@@ -43,15 +43,11 @@ const getElasticsearchResults = async (query: string) => {
 
 // Function to construct context from Elasticsearch results
 const createContextFromResults = (results: any[]) => {
-  let context = "";
+  if (results.length === 0) return "";
   
-  results.forEach((hit, index) => {
-    if (hit._source.body_content) {
-      context += `Document ${index + 1}:\n${hit._source.body_content}\n\n`;
-    }
-  });
-
-  return context;
+  // Take only the first 500 characters of each document
+  const truncatedContent = results[0]._source.body_content?.substring(0, 500) || "";
+  return `Relevant context:\n${truncatedContent}\n`;
 };
 
 export async function POST(req: NextRequest) {
@@ -69,23 +65,14 @@ export async function POST(req: NextRequest) {
     const conversationWithSystem = [
       {
         role: "system",
-        content: `You are a helpful assistant specializing in renewable energy projects. 
-        You can help with project planning, technical specifications, and general inquiries about renewable energy.
-        
-        When answering, use the following context from our knowledge base if relevant:
-        
-        ${searchContext}
-        
-        If the context is relevant, cite it in your response using [Doc X] format. 
-        If the context doesn't help answer the question, use your general knowledge about renewable energy.
-        Always be helpful and accurate.`
+        content: `You are Link, a grid expert specializing in renewable energy projects. Use this context if relevant: ${searchContext}`
       },
       ...messages.slice(0, -1), // Previous conversation
       {
         role: "user",
         content: `Question: ${latestUserMessage}
         
-        Please provide a helpful response using the context if relevant, or your general knowledge if not.`
+        Please provide a helpful response using the context if relevant, or your general knowledge if not. PLEASE BE CONCISE WITH YOUR ANSWERS!!`
       }
     ];
 
@@ -96,9 +83,7 @@ export async function POST(req: NextRequest) {
       max_tokens: 500,
     });
 
-    const assistantMessage = response.choices[0].message.content;
-
-    return NextResponse.json({ message: assistantMessage }, { status: 200 });
+    return NextResponse.json({ message: response.choices[0].message.content }, { status: 200 });
   } catch (error) {
     console.error('Error in chat:', error);
     return NextResponse.json(

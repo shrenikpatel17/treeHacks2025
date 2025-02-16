@@ -13,7 +13,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 // Register ChartJS components
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-const GroupMap = ({ group, projects }) => {
+const GroupMap = ({ group }) => {
     const mapContainer = useRef(null);
     const map = useRef(null);
 
@@ -32,75 +32,50 @@ const GroupMap = ({ group, projects }) => {
         map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
         map.current.on('load', () => {
-            // Create features array with substation and group's projects
-            const features = [];
-            
-            // Add substation point
             const substationCoords = parseSubstationCoordinate(group.substationCoordinate);
             console.log("Substation Coords:", substationCoords);
             
             if (substationCoords) {
-                features.push({
-                    type: 'Feature',
-                    geometry: {
-                        type: 'Point',
-                        coordinates: substationCoords
-                    },
-                    properties: {
-                        title: `${group.name} Substation`,
-                        description: 'Group Substation',
-                        pointType: 'substation'
+                // Add source and layer
+                map.current.addSource('points', {
+                    type: 'geojson',
+                    data: {
+                        type: 'FeatureCollection',
+                        features: [{
+                            type: 'Feature',
+                            geometry: {
+                                type: 'Point',
+                                coordinates: substationCoords
+                            },
+                            properties: {
+                                title: `${group.name} Substation`,
+                                description: 'Group Substation'
+                            }
+                        }]
                     }
                 });
-            }
 
-            // Add source and layer
-            map.current.addSource('points', {
-                type: 'geojson',
-                data: {
-                    type: 'FeatureCollection',
-                    features: features
-                }
-            });
+                map.current.addLayer({
+                    'id': 'points-layer',
+                    'type': 'circle',
+                    'source': 'points',
+                    'paint': {
+                        'circle-radius': 8,
+                        'circle-color': '#088',
+                        'circle-opacity': 0.7,
+                        'circle-stroke-width': 2,
+                        'circle-stroke-color': '#ffffff'
+                    }
+                });
 
-            map.current.addLayer({
-                'id': 'points-layer',
-                'type': 'circle',
-                'source': 'points',
-                'paint': {
-                    'circle-radius': 8,
-                    'circle-color': '#088',
-                    'circle-opacity': 0.7,
-                    'circle-stroke-width': 2,
-                    'circle-stroke-color': '#ffffff'
-                }
-            });
-
-            // Fit bounds to the substation point
-            if (substationCoords) {
+                // Fit bounds
                 const bounds = new mapboxgl.LngLatBounds();
                 bounds.extend(substationCoords);
                 map.current.fitBounds(bounds, { 
                     padding: 50,
-                    maxZoom: 8 // Prevent too much zoom
+                    maxZoom: 8
                 });
             }
-
-            // Add popup on hover
-            map.current.on('mouseenter', 'points-layer', (e) => {
-                const coordinates = e.features[0].geometry.coordinates.slice();
-                const { title, description } = e.features[0].properties;
-                
-                new mapboxgl.Popup()
-                    .setLngLat(coordinates)
-                    .setHTML(`<h3>${title}</h3><p>${description}</p>`)
-                    .addTo(map.current);
-            });
-
-            map.current.on('mouseleave', 'points-layer', () => {
-                const popups = document.getElementsByClassName('mapboxgl-popup');
-                if (popups[0]) popups[0].remove();
-            });
         });
 
         return () => map.current?.remove();
@@ -292,7 +267,7 @@ export default function Dashboard() {
     if (!coordString) return null;
     try {
         const [lat, lon] = coordString.replace(/[()]/g, '').split(',').map(Number);
-        return [lat, lon]; // Return in [longitude, latitude] format for Mapbox
+        return [lon, lat];
     } catch (error) {
         console.error("Error parsing substation coordinate:", error);
         return null;
