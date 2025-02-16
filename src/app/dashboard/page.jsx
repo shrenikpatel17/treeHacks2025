@@ -114,6 +114,11 @@ export default function Dashboard() {
                 url: 'mapbox://shrenikpatel.8qz3rtqa' 
             });
 
+            map.current.addSource('filtered-updated-capacity-dat-clflrg', {
+                type: 'vector',
+                url: 'mapbox://shrenikpatel.3py0eb24' 
+            });
+
             // Add a source for project points
             map.current.addSource('project-points', {
                 type: 'geojson',
@@ -159,6 +164,17 @@ export default function Dashboard() {
                 'source-layer': 'substationsWithCoordinates_1-98toln',
                 'paint': {
                     'circle-color': '#088',
+                    'circle-radius': 2
+                }
+            });
+
+            map.current.addLayer({
+                'id': 'capacity-points-layer',
+                'type': 'circle',
+                'source': 'filtered-updated-capacity-dat-clflrg',
+                'source-layer': 'filtered-updated-capacity-dat-clflrg',
+                'paint': {
+                    'circle-color':  '#5fea1f', 
                     'circle-radius': 2
                 }
             });
@@ -436,7 +452,7 @@ export default function Dashboard() {
       <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-wrap justify-center space-x-4 space-y-4">
         <div 
             ref={mapContainer} 
-            className="map-container w-[1000px] h-[800px]"
+            className="map-container w-[1200px] h-[900px] rounded-xl"
         />
       </div>
 

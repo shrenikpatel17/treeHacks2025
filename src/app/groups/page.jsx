@@ -13,6 +13,7 @@ import 'mapbox-gl/dist/mapbox-gl.css';
 // Register ChartJS components
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+
 export default function Dashboard() {
     const user = useSelector((state) => state.auth.user);
     const router = useRouter();
@@ -79,190 +80,121 @@ export default function Dashboard() {
   const mapContainer = useRef(null);
   const map = useRef(null);
 
-  useEffect(() => {
-    if (!mapContainer.current) return;
+//   useEffect(() => {
+//     if (!mapContainer.current) return;
     
-    mapboxgl.accessToken = 'pk.eyJ1Ijoic2hyZW5pa3BhdGVsIiwiYSI6ImNtNzZ5c2djaDEyY2gybXBybDhlMXY2bmMifQ.Gse4PXbgo5TydviHbdsM9Q';
+//     mapboxgl.accessToken = 'pk.eyJ1Ijoic2hyZW5pa3BhdGVsIiwiYSI6ImNtNzZ5c2djaDEyY2gybXBybDhlMXY2bmMifQ.Gse4PXbgo5TydviHbdsM9Q';
     
-    map.current = new mapboxgl.Map({
-        container: mapContainer.current,
-        style: 'mapbox://styles/shrenikpatel/cm76zveu300a901rf2lbdhgsu',
-        center: [-122.1, 37.4],
-        zoom: 7
-    });
+//     map.current = new mapboxgl.Map({
+//         container: mapContainer.current,
+//         style: 'mapbox://styles/shrenikpatel/cm76zveu300a901rf2lbdhgsu',
+//         center: [-122.1, 37.4],
+//         zoom: 7
+//     });
 
-    // Add navigation controls
-    map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+//     // Add navigation controls
+//     map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
-    // Add project points when map loads
-    map.current.on('load', () => {
-        // Add transmission lines source and layer
-        map.current.addSource('Electric__Power_Transmission_-abcl2z', {
-            type: 'vector',
-            url: 'mapbox://shrenikpatel.97uttm42' 
-        });
+//     // Add project points when map loads
+//     map.current.on('load', () => {
+//         // Add transmission lines source and layer
+//         map.current.addSource('Electric__Power_Transmission_-abcl2z', {
+//             type: 'vector',
+//             url: 'mapbox://shrenikpatel.97uttm42' 
+//         });
 
-        map.current.addSource('substationsWithCoordinates_1-98toln', {
-            type: 'vector',
-            url: 'mapbox://shrenikpatel.8qz3rtqa' 
-        });
+//         map.current.addSource('substationsWithCoordinates_1-98toln', {
+//             type: 'vector',
+//             url: 'mapbox://shrenikpatel.8qz3rtqa' 
+//         });
 
-        // Add a source for project points
-        map.current.addSource('project-points', {
-            type: 'geojson',
-            data: {
-                type: 'FeatureCollection',
-                features: allProjects
-                    .map(project => {
-                        const coords = parseProjectCoordinates(project.metadata.location);
-                        if (!coords) return null;
-                        return {
-                            type: 'Feature',
-                            geometry: {
-                                type: 'Point',
-                                coordinates: [coords[1], coords[0]] // [longitude, latitude]
-                            },
-                            properties: {
-                                title: project.name,
-                                description: `${project.metadata.generationType1}: ${project.metadata.generationSize1} MW`
-                            }
-                        };
-                    })
-                    .filter(feature => feature !== null)
-            }
-        });
+//         // Add a source for project points
+//         map.current.addSource('project-points', {
+//             type: 'geojson',
+//             data: {
+//                 type: 'FeatureCollection',
+//                 features: allProjects
+//                     .map(project => {
+//                         const coords = parseProjectCoordinates(project.metadata.location);
+//                         if (!coords) return null;
+//                         return {
+//                             type: 'Feature',
+//                             geometry: {
+//                                 type: 'Point',
+//                                 coordinates: [coords[1], coords[0]] // [longitude, latitude]
+//                             },
+//                             properties: {
+//                                 title: project.name,
+//                                 description: `${project.metadata.generationType1}: ${project.metadata.generationSize1} MW`
+//                             }
+//                         };
+//                     })
+//                     .filter(feature => feature !== null)
+//             }
+//         });
 
-        // Add transmission lines layer
-        map.current.addLayer({
-            'id': 'transmission-lines-layer',
-            'type': 'line',
-            'source': 'Electric__Power_Transmission_-abcl2z',
-            'source-layer': 'Electric__Power_Transmission_-abcl2z',
-            'paint': {
-                'line-color': '#088',
-                'line-width': 2
-            }
-        });
+//         // Add transmission lines layer
+//         map.current.addLayer({
+//             'id': 'transmission-lines-layer',
+//             'type': 'line',
+//             'source': 'Electric__Power_Transmission_-abcl2z',
+//             'source-layer': 'Electric__Power_Transmission_-abcl2z',
+//             'paint': {
+//                 'line-color': '#088',
+//                 'line-width': 2
+//             }
+//         });
 
-        // Add substations layer
-        map.current.addLayer({
-            'id': 'substation-points-layer',
-            'type': 'circle',
-            'source': 'substationsWithCoordinates_1-98toln',
-            'source-layer': 'substationsWithCoordinates_1-98toln',
-            'paint': {
-                'circle-color': '#088',
-                'circle-radius': 2
-            }
-        });
+//         // Add substations layer
+//         map.current.addLayer({
+//             'id': 'substation-points-layer',
+//             'type': 'circle',
+//             'source': 'substationsWithCoordinates_1-98toln',
+//             'source-layer': 'substationsWithCoordinates_1-98toln',
+//             'paint': {
+//                 'circle-color': '#088',
+//                 'circle-radius': 2
+//             }
+//         });
 
-        // Add project points layer
-        map.current.addLayer({
-            'id': 'project-points-layer',
-            'type': 'circle',
-            'source': 'project-points',
-            'paint': {
-                'circle-radius': 6,
-                'circle-color': '#ff0000',
-                'circle-opacity': 0.7,
-                'circle-stroke-width': 2,
-                'circle-stroke-color': '#ffffff'
-            }
-        });
+//         // Add project points layer
+//         map.current.addLayer({
+//             'id': 'project-points-layer',
+//             'type': 'circle',
+//             'source': 'project-points',
+//             'paint': {
+//                 'circle-radius': 6,
+//                 'circle-color': '#ff0000',
+//                 'circle-opacity': 0.7,
+//                 'circle-stroke-width': 2,
+//                 'circle-stroke-color': '#ffffff'
+//             }
+//         });
 
-        // Add popup on hover
-        map.current.on('mouseenter', 'project-points-layer', (e) => {
-            const coordinates = e.features[0].geometry.coordinates.slice();
-            const { title, description } = e.features[0].properties;
+//         // Add popup on hover
+//         map.current.on('mouseenter', 'project-points-layer', (e) => {
+//             const coordinates = e.features[0].geometry.coordinates.slice();
+//             const { title, description } = e.features[0].properties;
 
-            console.log(e.features)
+//             console.log(e.features)
             
-            new mapboxgl.Popup()
-                .setLngLat(coordinates)
-                .setHTML(`<h3>${title}</h3><p>${description}</p>`)
-                .addTo(map.current);
-        });
+//             new mapboxgl.Popup()
+//                 .setLngLat(coordinates)
+//                 .setHTML(`<h3>${title}</h3><p>${description}</p>`)
+//                 .addTo(map.current);
+//         });
 
-        map.current.on('mouseleave', 'project-points-layer', () => {
-            const popups = document.getElementsByClassName('mapboxgl-popup');
-            if (popups[0]) popups[0].remove();
-        });
-    });
+//         map.current.on('mouseleave', 'project-points-layer', () => {
+//             const popups = document.getElementsByClassName('mapboxgl-popup');
+//             if (popups[0]) popups[0].remove();
+//         });
+//     });
 
-    // Cleanup on unmount
-    return () => map.current?.remove();
-  }, [allProjects]);
+//     // Cleanup on unmount
+//     return () => map.current?.remove();
+//   }, [allProjects]);
 
-
-  useEffect(() => {
-    if (chatContainerRef.current) {
-        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-    }
-  }, [messages]);
-
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!currentMessage.trim()) return;
-
-    // Add user message to chat
-    const userMessage = {
-        role: 'user',
-        content: currentMessage
-    };
-    setMessages(prev => [...prev, userMessage]);
-    setCurrentMessage("");
-
-    try {
-        const response = await fetch('/api/elasticChat', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                messages: [...messages, userMessage]
-            }),
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to get response');
-        }
-
-        const data = await response.json();
-        setMessages(prev => [...prev, {
-            role: 'assistant',
-            content: data.message
-        }]);
-    } catch (error) {
-        console.error('Error sending message:', error);
-        // Optionally add error message to chat
-        setMessages(prev => [...prev, {
-            role: 'assistant',
-            content: "Sorry, I encountered an error processing your message."
-        }]);
-    }
-  };
-
-  const handleDetailsClick = (e, group) => {
-    e.stopPropagation(); // Prevent the button click from triggering the parent button
-    setSelectedGroup(group);
-    setIsDetailsModalOpen(true);
-  };
-
-  const parseProjectCoordinates = (locationString) => {
-    if (!locationString) return null;
-    try {
-        const coordinates = locationString.split("|")[0]
-            .match(/[-+]?\d*\.?\d+/g)
-            .map(Number);
-        return coordinates;
-    } catch (error) {
-        console.error("Error parsing coordinates:", error);
-        return null;
-    }
-  };
-
-  // Add this function to process group project data
-  const getGroupProjectsData = (group) => {
+const getGroupProjectsData = (group) => {
     if (!group || !group.projects || !allProjects) return null;
 
     // Filter projects that belong to this group
@@ -339,6 +271,284 @@ export default function Dashboard() {
         projects: groupProjects
     };
   };
+
+  const GroupDetailsModal = ({ group, onClose }) => {
+    const mapContainer = useRef(null);
+    const map = useRef(null);
+    
+    useEffect(() => {
+        if (!mapContainer.current || !group) return;
+        
+        mapboxgl.accessToken = 'pk.eyJ1Ijoic2hyZW5pa3BhdGVsIiwiYSI6ImNtNzZ5c2djaDEyY2gybXBybDhlMXY2bmMifQ.Gse4PXbgo5TydviHbdsM9Q';
+        
+        const groupData = getGroupProjectsData(group);
+        if (!groupData) return;
+
+        // Initialize map
+        map.current = new mapboxgl.Map({
+            container: mapContainer.current,
+            style: 'mapbox://styles/shrenikpatel/cm76zveu300a901rf2lbdhgsu',
+            center: [-122.1, 37.4],
+            zoom: 7
+        });
+
+        // Add navigation controls
+        map.current.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+        // Set up map data when map loads
+        map.current.on('load', () => {
+            // Add transmission lines source and layer
+            map.current.addSource('Electric__Power_Transmission_-abcl2z', {
+                type: 'vector',
+                url: 'mapbox://shrenikpatel.97uttm42' 
+            });
+
+            map.current.addSource('substationsWithCoordinates_1-98toln', {
+                type: 'vector',
+                url: 'mapbox://shrenikpatel.8qz3rtqa' 
+            });
+
+            // Add a source for group's project points
+            map.current.addSource('project-points', {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: groupData.projects
+                        .map(project => {
+                            const coords = parseProjectCoordinates(project.metadata.location);
+                            if (!coords) return null;
+                            return {
+                                type: 'Feature',
+                                geometry: {
+                                    type: 'Point',
+                                    coordinates: [coords[1], coords[0]]
+                                },
+                                properties: {
+                                    title: project.name,
+                                    description: `${project.metadata.generationType1}: ${project.metadata.generationSize1} MW`
+                                }
+                            };
+                        })
+                        .filter(feature => feature !== null)
+                }
+            });
+
+            // Add layers
+            map.current.addLayer({
+                'id': 'transmission-lines-layer',
+                'type': 'line',
+                'source': 'Electric__Power_Transmission_-abcl2z',
+                'source-layer': 'Electric__Power_Transmission_-abcl2z',
+                'paint': {
+                    'line-color': '#088',
+                    'line-width': 2
+                }
+            });
+
+            map.current.addLayer({
+                'id': 'substation-points-layer',
+                'type': 'circle',
+                'source': 'substationsWithCoordinates_1-98toln',
+                'source-layer': 'substationsWithCoordinates_1-98toln',
+                'paint': {
+                    'circle-color': '#088',
+                    'circle-radius': 2
+                }
+            });
+
+            map.current.addLayer({
+                'id': 'project-points-layer',
+                'type': 'circle',
+                'source': 'project-points',
+                'paint': {
+                    'circle-radius': 6,
+                    'circle-color': '#ff0000',
+                    'circle-opacity': 0.7,
+                    'circle-stroke-width': 2,
+                    'circle-stroke-color': '#ffffff'
+                }
+            });
+
+            // Add popup functionality
+            map.current.on('mouseenter', 'project-points-layer', (e) => {
+                const coordinates = e.features[0].geometry.coordinates.slice();
+                const { title, description } = e.features[0].properties;
+                
+                new mapboxgl.Popup()
+                    .setLngLat(coordinates)
+                    .setHTML(`<h3>${title}</h3><p>${description}</p>`)
+                    .addTo(map.current);
+            });
+
+            map.current.on('mouseleave', 'project-points-layer', () => {
+                const popups = document.getElementsByClassName('mapboxgl-popup');
+                if (popups[0]) popups[0].remove();
+            });
+
+            // Fit map to project points
+            const features = map.current.getSource('project-points')._data.features;
+            if (features.length > 0) {
+                const bounds = new mapboxgl.LngLatBounds();
+                features.forEach(feature => {
+                    bounds.extend(feature.geometry.coordinates);
+                });
+                map.current.fitBounds(bounds, { padding: 50 });
+            }
+        });
+
+        // Cleanup
+        return () => {
+            if (map.current) {
+                map.current.remove();
+                map.current = null;
+            }
+        };
+    }, [group]);
+
+    const groupData = getGroupProjectsData(group);
+    if (!groupData) return null;
+
+    return (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white p-8 rounded-xl shadow-lg w-3/4 max-h-[90vh] overflow-y-auto">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-mono text-green-900">{group.name}</h2>
+                    <button 
+                        onClick={onClose}
+                        className="text-gray-500 hover:text-gray-700"
+                    >
+                        <span className="text-2xl">×</span>
+                    </button>
+                </div>
+
+                <div className="grid grid-cols-2 gap-8">
+                    {/* Left Column - Summary Data */}
+                    <div className="space-y-6">
+                        <div className="bg-light-color p-4 rounded-xl border border-dark-green">
+                            <h3 className="text-lg font-bold font-mono text-green-900 mb-2">Group Summary</h3>
+                            <p className="font-mono text-gray-600">Total Projects: {groupData.projects.length}</p>
+                            <p className="font-mono text-gray-600">Total Budget: ${groupData.totalBudget.toLocaleString()}</p>
+                            <p className="font-mono text-gray-600">Location: {group.location || "Multiple Locations"}</p>
+                        </div>
+
+                        <div className="mt-6">
+                            <h3 className="text-lg font-bold font-mono text-green-900 mb-4">Project Locations</h3>
+                            <div className="w-full h-[400px] rounded-xl overflow-hidden border border-dark-green">
+                                <div ref={mapContainer} className="w-full h-full" />
+                            </div>
+                        </div>
+
+                        {/* Pie Chart */}
+                        <div className="bg-light-color p-4 rounded-xl border border-dark-green">
+                            <h3 className="text-lg font-bold font-mono text-green-900 mb-4">Generation Mix</h3>
+                            <div className="h-64">
+                                <Pie 
+                                    data={groupData.chartData}
+                                    options={groupData.chartOptions}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Right Column - Project List */}
+                    <div className="bg-light-color p-4 rounded-xl border border-dark-green">
+                        <h3 className="text-lg font-mono font-bold text-green-900 mb-4">Projects</h3>
+                        <div className="space-y-4">
+                            {groupData.projects.map(project => (
+                                <div key={project._id} className="bg-white p-4 rounded-lg border border-dark-green">
+                                    <h4 className="font-mono text-green-900 font-semibold">{project.name}</h4>
+                                    <p className="text-sm font-mono text-gray-600">Budget: ${Number(project.metadata.budget.replace(/,/g, '')).toLocaleString()}</p>
+                                    <div className="grid grid-cols-2 gap-2 mt-2">
+                                        {project.metadata.generationType1 && (
+                                            <p className="text-sm font-mono text-gray-600">
+                                                {project.metadata.generationType1}: {project.metadata.generationSize1} MW
+                                            </p>
+                                        )}
+                                        {project.metadata.generationType2 && (
+                                            <p className="text-sm font-mono text-gray-600">
+                                                {project.metadata.generationType2}: {project.metadata.generationSize2} MW
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+  useEffect(() => {
+    if (chatContainerRef.current) {
+        chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [messages]);
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!currentMessage.trim()) return;
+
+    // Add user message to chat
+    const userMessage = {
+        role: 'user',
+        content: currentMessage
+    };
+    setMessages(prev => [...prev, userMessage]);
+    setCurrentMessage("");
+
+    try {
+        const response = await fetch('/api/elasticChat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                messages: [...messages, userMessage]
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to get response');
+        }
+
+        const data = await response.json();
+        setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: data.message
+        }]);
+    } catch (error) {
+        console.error('Error sending message:', error);
+        // Optionally add error message to chat
+        setMessages(prev => [...prev, {
+            role: 'assistant',
+            content: "Sorry, I encountered an error processing your message."
+        }]);
+    }
+  };
+
+  const handleDetailsClick = (e, group) => {
+    e.stopPropagation(); // Prevent the button click from triggering the parent button
+    setSelectedGroup(group);
+    setIsDetailsModalOpen(true);
+  };
+
+  const parseProjectCoordinates = (locationString) => {
+    if (!locationString) return null;
+    try {
+        const coordinates = locationString.split("|")[0]
+            .match(/[-+]?\d*\.?\d+/g)
+            .map(Number);
+        return coordinates;
+    } catch (error) {
+        console.error("Error parsing coordinates:", error);
+        return null;
+    }
+  };
+
 
   // Add this function to get colors for different generation types
   const getColorForType = (type) => {
@@ -436,83 +646,10 @@ export default function Dashboard() {
         </div>
 
         {isDetailsModalOpen && selectedGroup && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                <div className="bg-white p-8 rounded-xl shadow-lg w-3/4 max-h-[80vh] overflow-y-auto">
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-2xl font-mono text-green-900">{selectedGroup.name}</h2>
-                        <button 
-                            onClick={() => setIsDetailsModalOpen(false)}
-                            className="text-gray-500 hover:text-gray-700"
-                        >
-                            <span className="text-2xl">×</span>
-                        </button>
-                    </div>
-
-                    {(() => {
-                        const groupData = getGroupProjectsData(selectedGroup);
-                        if (!groupData) return <p>No project data available</p>;
-
-                        return (
-                            <div className="grid grid-cols-2 gap-8">
-                                {/* Left Column - Summary Data */}
-                                <div className="space-y-6">
-                                    <div className="bg-light-color p-4 rounded-xl border border-dark-green">
-                                        <h3 className="text-lg font-bold font-mono text-green-900 mb-2">Group Summary</h3>
-                                        <p className="font-mono text-gray-600">Total Projects: {groupData.projects.length}</p>
-                                        <p className="font-mono text-gray-600">Total Budget: ${groupData.totalBudget.toLocaleString()}</p>
-                                        <p className="font-mono text-gray-600">Location: {selectedGroup.location || "Multiple Locations"}</p>
-                                    </div>
-
-                                    {/* Pie Chart */}
-                                    <div className="bg-light-color p-4 rounded-xl border border-dark-green">
-                                        <h3 className="text-lg font-bold font-mono text-green-900 mb-4">Generation Mix</h3>
-                                        <div className="h-64">
-                                            <Pie 
-                                                data={groupData.chartData}
-                                                options={groupData.chartOptions}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Right Column - Project List */}
-                                <div className="bg-light-color p-4 rounded-xl border border-dark-green">
-                                    <h3 className="text-lg font-mono font-bold text-green-900 mb-4">Projects</h3>
-                                    <div className="space-y-4">
-                                        {groupData.projects.map(project => (
-                                            <div key={project._id} className="bg-white p-4 rounded-lg border border-dark-green">
-                                                <h4 className="font-mono text-green-900 font-semibold">{project.name}</h4>
-                                                <p className="text-sm font-mono text-gray-600">Budget: ${Number(project.metadata.budget.replace(/,/g, '')).toLocaleString()}</p>
-                                                <div className="grid grid-cols-2 gap-2 mt-2">
-                                                    {project.metadata.generationType1 && (
-                                                        <p className="text-sm font-mono text-gray-600">
-                                                            {project.metadata.generationType1}: {project.metadata.generationSize1} MW
-                                                        </p>
-                                                    )}
-                                                    {project.metadata.generationType2 && (
-                                                        <p className="text-sm font-mono text-gray-600">
-                                                            {project.metadata.generationType2}: {project.metadata.generationSize2} MW
-                                                        </p>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    <h3 className="text-lg font-bold font-mono text-green-900 mb-4">Map</h3>
-                                    <div className="transform z-20 justify-center space-x-4 space-y-4">
-                                        <div 
-                                            ref={mapContainer} 
-                                            className="map-container w-[400px] h-[200px]"
-                                        />
-                                    </div>
-                                    </div>
-                                </div>
-
-                            </div>
-                        );
-                    })()}
-                </div>
-            </div>
-        )}
+            <GroupDetailsModal 
+            group={selectedGroup} 
+            onClose={() => setIsDetailsModalOpen(false)} 
+        />)};
    </>
   );
 }
