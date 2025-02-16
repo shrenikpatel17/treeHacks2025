@@ -87,6 +87,11 @@ export default function Dashboard() {
   // Add this state to track the most recent project
   const [mostRecentProject, setMostRecentProject] = useState(null);
 
+  // Add these state variables
+  const [isBidModalOpen, setIsBidModalOpen] = useState(false);
+  const [bidAmount, setBidAmount] = useState("");
+  const [selectedGroupForBid, setSelectedGroupForBid] = useState(null);
+
   useEffect(() => {
     if (allProjects && allProjects.length > 0 && allGroups && allGroups.length > 0) {
       const recommendedOrder = recommendationAlgorithm();
@@ -571,6 +576,11 @@ const getGroupProjectsData = (group) => {
                                                 {project.metadata.generationType2}: {project.metadata.generationSize2} MW
                                             </p>
                                         )}
+                                        {project.metadata.transmissionBid && (
+                                            <p className="text-sm font-mono text-gray-600">
+                                                <b>Bid Contribution:</b> ${project.metadata.transmissionBid}
+                                            </p>
+                                        )}
                                     </div>
                                 </div>
                             ))}
@@ -639,16 +649,41 @@ const getGroupProjectsData = (group) => {
   };
 
   const handleEnterClick = async (e, group) => {
-    e.stopPropagation(); // Prevent event bubbling
+    e.stopPropagation();
 
     if (!mostRecentProject) {
         alert("No project available to add to group");
         return;
     }
 
+    setSelectedGroupForBid(group);
+    setIsBidModalOpen(true);
+  };
+
+  const handleBidSubmit = async () => {
+    if (!bidAmount || !mostRecentProject || !selectedGroupForBid) {
+        alert("Please enter a bid amount");
+        return;
+    }
+
     try {
-        // Update the group with the new project
-        const response = await fetch(`/api/groups/${group._id}`, {
+        // Update the project metadata with the bid
+        const response = await fetch(`/api/projects/${mostRecentProject._id}`, {
+            method: 'PATCH',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                'metadata.transmissionBid': bidAmount
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update project');
+        }
+
+        // Add project to group
+        const groupResponse = await fetch(`/api/groups/${selectedGroupForBid._id}`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json',
@@ -658,14 +693,14 @@ const getGroupProjectsData = (group) => {
             }),
         });
 
-        if (!response.ok) {
+        if (!groupResponse.ok) {
             throw new Error('Failed to update group');
         }
 
-        // Update local state
+        // Update local state for groups
         setAllGroups(prevGroups => 
             prevGroups.map(g => {
-                if (g._id === group._id) {
+                if (g._id === selectedGroupForBid._id) {
                     return {
                         ...g,
                         projects: [...g.projects, mostRecentProject._id]
@@ -675,11 +710,29 @@ const getGroupProjectsData = (group) => {
             })
         );
 
-        // Show success message
-        alert(`Project ${mostRecentProject.name} added to group ${group.name}`);
+        // Update local state for projects
+        setAllProjects(prevProjects => 
+            prevProjects.map(p => {
+                if (p._id === mostRecentProject._id) {
+                    return {
+                        ...p,
+                        metadata: {
+                            ...p.metadata,
+                            transmissionBid: bidAmount
+                        }
+                    };
+                }
+                return p;
+            })
+        );
+
+        // Reset modal state
+        setIsBidModalOpen(false);
+        setBidAmount("");
+        setSelectedGroupForBid(null);
 
     } catch (error) {
-        console.error('Error updating group:', error);
+        console.error('Error updating project and group:', error);
         alert('Failed to add project to group');
     }
   };
@@ -762,7 +815,7 @@ const getGroupProjectsData = (group) => {
 
             {/* Chat Panel */}
             <div className="w-1/5 mt-16 border border-dark-green bg-gradient-to-b from-grad-light via-grad-light to-grad-dark rounded-2xl p-4 flex flex-col">
-                <h2 className="text-lg font-mono text-green-900 mb-4">Chat Assistant</h2>
+                <h2 className="text-lg font-mono text-green-900 mb-4">Ask Link (your grid expert)...</h2>
                 
                 {/* Chat Messages Container */}
                 <div 
@@ -808,6 +861,39 @@ const getGroupProjectsData = (group) => {
             group={selectedGroup} 
             onClose={() => setIsDetailsModalOpen(false)} 
         />)};
+
+        {isBidModalOpen && (
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                <div className="bg-white p-6 rounded-xl shadow-lg w-1/3">
+                    <h2 className="text-lg font-mono text-green-900 mb-4">Enter Transmission Contribution Bid</h2>
+                    <input 
+                        type="text" 
+                        placeholder="Bid Amount (USD)" 
+                        className="w-full font-mono p-2 border border-gray-300 rounded mb-4" 
+                        value={bidAmount} 
+                        onChange={(e) => setBidAmount(e.target.value)}
+                    />
+                    <div className="flex justify-end space-x-2">
+                        <button 
+                            onClick={() => {
+                                setIsBidModalOpen(false);
+                                setBidAmount("");
+                                setSelectedGroupForBid(null);
+                            }} 
+                            className="bg-gray-100 font-mono hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl"
+                        >
+                            Cancel
+                        </button>
+                        <button 
+                            onClick={handleBidSubmit} 
+                            className="bg-dark-green font-mono hover:bg-text-green text-white px-4 py-2 rounded-xl"
+                        >
+                            Submit Bid
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
    </>
   );
 }

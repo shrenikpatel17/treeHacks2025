@@ -661,7 +661,7 @@ export default function Dashboard() {
 
             {/* Chat Panel */}
             <div className="w-1/5 mt-16 border border-dark-green bg-gradient-to-b from-grad-light via-grad-light to-grad-dark rounded-2xl p-4 flex flex-col">
-                <h2 className="text-lg font-mono text-green-900 mb-4">Chat Assistant</h2>
+                <h2 className="text-lg font-mono text-green-900 mb-4">Ask Link (your grid expert)...</h2>
                 
                 {/* Chat Messages Container */}
                 <div 

@@ -60,7 +60,7 @@ export default function Dashboard() {
   const [generationSize2, setGenerationSize2] = useState("");
   const [requestedCompletionDate, setRequestedCompletionDate] = useState("");
   const [budget, setBudget] = useState("");
-  const [transmissionBid, setTransmissionBid] = useState("");
+//   const [transmissionBid, setTransmissionBid] = useState("");
 
   const [messages, setMessages] = useState([]);
   const [currentMessage, setCurrentMessage] = useState("");
@@ -310,7 +310,7 @@ export default function Dashboard() {
             generationSize2: generationSize2,
             requestedCompletionDate: requestedCompletionDate,
             budget: budget,
-            transmissionBid: transmissionBid,
+            // transmissionBid: transmissionBid,
             status: "pending",
         },
     };
@@ -461,7 +461,7 @@ export default function Dashboard() {
 
       {/* Updated Query Panel with Chat UI */}
       <div className="mt-16 w-1/5 border border-dark-green bg-gradient-to-b from-grad-light via-grad-light to-grad-dark rounded-2xl p-4 flex flex-col">
-        <h2 className="text-lg font-mono text-green-900 mb-4">Chat Assistant</h2>
+        <h2 className="text-lg font-mono text-green-900 mb-4">Ask Link (your grid expert)...</h2>
         
         {/* Chat Messages Container */}
         <div 
@@ -536,7 +536,7 @@ export default function Dashboard() {
                 <input type="text" placeholder="Generation Size 2 (MW)" className="w-full font-mono p-2 border border-gray-300 rounded mb-4" value={generationSize2} onChange={(e) => setGenerationSize2(e.target.value)} />
                 <input type="text" placeholder="Requested Completion Date" className="w-full font-mono p-2 border border-gray-300 rounded mb-4" value={requestedCompletionDate} onChange={(e) => setRequestedCompletionDate(e.target.value)} />
                 <input type="text" placeholder="Budget (USD)" className="w-full font-mono p-2 border border-gray-300 rounded mb-4" value={budget} onChange={(e) => setBudget(e.target.value)} />
-                <input type="text" placeholder="Transmission Contribution Bid (USD)" className="w-full font-mono p-2 border border-gray-300 rounded mb-4" value={transmissionBid} onChange={(e) => setTransmissionBid(e.target.value)} />
+                {/* <input type="text" placeholder="Transmission Contribution Bid (USD)" className="w-full font-mono p-2 border border-gray-300 rounded mb-4" value={transmissionBid} onChange={(e) => setTransmissionBid(e.target.value)} /> */}
 
                 <div className="flex justify-end space-x-2">
                     <button onClick={() => setIsModalOpen(false)} className="bg-gray-100 font-mono hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl">Cancel</button>

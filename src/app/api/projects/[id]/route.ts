@@ -8,22 +8,27 @@ export async function PATCH(
 ) {
     try {
         await connectMongoDB();
-        const updates = await req.json();
-        
-        const project = await Project.findByIdAndUpdate(
-            params.id,
-            { $set: updates },
+        const { id } = params;
+        const updateData = await req.json();
+
+        const updatedProject = await Project.findByIdAndUpdate(
+            id,
+            { $set: updateData },
             { new: true }
         );
 
-        if (!project) {
+        if (!updatedProject) {
             return NextResponse.json(
                 { error: "Project not found" },
                 { status: 404 }
             );
         }
 
-        return NextResponse.json({ data: project });
+        return NextResponse.json({ 
+            success: true, 
+            data: updatedProject 
+        });
+
     } catch (error) {
         console.error('Error updating project:', error);
         return NextResponse.json(
