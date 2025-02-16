@@ -61,6 +61,8 @@ export default function Dashboard() {
     }
     fetchGroups();
 
+    recommendationAlgorithm();
+
     }, [user])
   
   const dispatch = useDispatch();
@@ -76,6 +78,99 @@ export default function Dashboard() {
 
   const [selectedGroup, setSelectedGroup] = useState(null);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [orderedGroups, setOrderedGroups] = useState([]);
+
+  useEffect(() => {
+    if (allProjects && allProjects.length > 0 && allGroups && allGroups.length > 0) {
+      const recommendedOrder = recommendationAlgorithm();
+      setOrderedGroups(recommendedOrder);
+    }
+  }, [allProjects, allGroups]);
+
+  function parseCoordinate(coordString) {
+    const [lat, lon] = coordString.replace(/[()]/g, '').split(',').map(Number);
+    return { lat, lon };
+  }
+
+  function getDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371;
+    const dLat = (lat2 - lat1) * (Math.PI / 180);
+    const dLon = (lon2 - lon1) * (Math.PI / 180);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * (Math.PI / 180)) *
+        Math.cos(lat2 * (Math.PI / 180)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  function recommendationAlgorithm() {
+    if (!allProjects || allProjects.length === 0) {
+      return [];
+    }
+
+    const project = allProjects[allProjects.length - 1];
+    console.log("Most recent project:", project);
+
+    const projectCompletionStr = project.metadata?.requestedCompletionDate || "";
+    const projectGenSize1 = Number(project.metadata?.generationSize1 || 0);
+    const projectGenSize2 = Number(project.metadata?.generationSize2 || 0);
+
+    let projectLat = 0;
+    let projectLon = 0;
+    let locationWeight = 1;
+    if (project.metadata?.location) {
+      const [coordPart, weightPart] = project.metadata.location.split("|");
+      const coords = parseCoordinate(coordPart);
+      projectLat = coords.lat;
+      projectLon = coords.lon;
+      locationWeight = weightPart ? parseFloat(weightPart) : 1;
+    }
+
+    let projectCompletionDate = new Date(projectCompletionStr);
+    if (isNaN(projectCompletionDate.getTime())) {
+      projectCompletionDate = new Date();
+    }
+
+    const groupScores = allGroups.map((group) => {
+      let compatibility = 0;
+
+      if (group.isPotential) {
+        const groupCompDate = new Date(group.completionDate);
+        if (!isNaN(groupCompDate.getTime())) {
+          const diffInMs = Math.abs(groupCompDate - projectCompletionDate);
+          const diffInDays = diffInMs / (1000 * 3600 * 24);
+          compatibility += diffInDays;
+        }
+      } else {
+        const neededCapacity = projectGenSize1 + projectGenSize2;
+        if (group.capacityLeft < neededCapacity) {
+          compatibility += 999999;
+        }
+      }
+
+      let groupLat = 0;
+      let groupLon = 0;
+      if (group.substationCoordinate) {
+        const parsed = parseCoordinate(group.substationCoordinate);
+        groupLat = parsed.lat;
+        groupLon = parsed.lon;
+      }
+      const distanceKm = getDistance(projectLat, projectLon, groupLat, groupLon);
+      compatibility += distanceKm * locationWeight;
+
+      return {
+        groupId: group._id,
+        compatibility
+      };
+    });
+
+    groupScores.sort((a, b) => a.compatibility - b.compatibility);
+    console.log("Sorted group scores:", groupScores);
+
+    return groupScores.map(gs => gs.groupId);
+  }
 
   const mapContainer = useRef(null);
   const map = useRef(null);
@@ -582,22 +677,26 @@ const getGroupProjectsData = (group) => {
                 {/* Groups Grid */}
                 <div className="flex-1 overflow-y-auto pr-4">
                     <div className="grid gap-4">
-                        {allGroups.map((group) => (
-                            <button
-                                key={group._id}
-                                className="bg-light-color font-mono border border-dark-green h-44 w-full rounded-xl shadow-sm cursor-pointer hover:bg-light-hover-color focus:outline-none p-4 text-left relative"
-                            >
-                                <h3 className="text-lg font-semibold text-green-900 absolute top-4 left-4">{group.name}</h3>
-                                <p className="text-sm text-gray-600 absolute top-4 right-4">Num projects: {group.projects.length}</p>
-                                <p className="text-sm text-gray-600 absolute bottom-4 left-4">Remaining capacity: {group.maxCapacity} MW</p>
-                                <button 
-                                    onClick={(e) => handleDetailsClick(e, group)}
-                                    className="bg-dark-green absolute bottom-4 right-4 font-mono text-white p-2 rounded-xl hover:bg-opacity-90 ml-auto"
+                        { orderedGroups != [] && orderedGroups.map((groupId) => {
+                            const group = allGroups.find(g => g._id === groupId);
+                            if (!group) return null;
+                            return (
+                                <button
+                                    key={group._id}
+                                    className="bg-light-color font-mono border border-dark-green h-44 w-full rounded-xl shadow-sm cursor-pointer hover:bg-light-hover-color focus:outline-none p-4 text-left relative"
                                 >
-                                    Details
+                                    <h3 className="text-lg font-semibold text-green-900 absolute top-4 left-4">{group.name}</h3>
+                                    <p className="text-sm text-gray-600 absolute top-4 right-4">Num projects: {group.projects.length}</p>
+                                    <p className="text-sm text-gray-600 absolute bottom-4 left-4">Remaining capacity: {group.maxCapacity} MW</p>
+                                    <button 
+                                        onClick={(e) => handleDetailsClick(e, group)}
+                                        className="bg-dark-green absolute bottom-4 right-4 font-mono text-white p-2 rounded-xl hover:bg-opacity-90 ml-auto"
+                                    >
+                                        Details
+                                    </button>
                                 </button>
-                            </button>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             </div>

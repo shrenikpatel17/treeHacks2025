@@ -16,6 +16,7 @@ ChartJS.register(ArcElement, Tooltip, Legend);
 export default function Dashboard() {
     const user = useSelector((state) => state.auth.user);
     const router = useRouter();
+    const dispatch = useDispatch();
 
     useEffect(() => {
         if(!user && !user.iso) {
@@ -62,8 +63,6 @@ export default function Dashboard() {
 
     }, [user])
   
-  const dispatch = useDispatch();
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [allProjects, setAllProjects] = useState([]);
   const [userProjects, setUserProjects] = useState([]);
@@ -80,6 +79,7 @@ export default function Dashboard() {
   const [groupName, setGroupName] = useState("");
   const [connectionCoordinate, setConnectionCoordinate] = useState("");
   const [substationCoordinate, setSubstationCoordinate] = useState("");
+  const [completionDate, setCompletionDate] = useState("");
 
   useEffect(() => {
     if (chatContainerRef.current) {
@@ -508,6 +508,7 @@ export default function Dashboard() {
           name: groupName,
           connectionCoordinate: connectionCoordinate,
           substationCoordinate: substationCoordinate,
+          completionDate: completionDate
       };
   
       try {
@@ -544,6 +545,7 @@ export default function Dashboard() {
       setGroupName("");
       setConnectionCoordinate("");
       setSubstationCoordinate("");
+      setCompletionDate("");
       };
 
 
@@ -711,7 +713,7 @@ export default function Dashboard() {
                 <input type="text" placeholder="Group Name" className="w-full font-mono p-2 border border-gray-300 rounded mb-2" value={groupName} onChange={(e) => setGroupName(e.target.value)} />
                 <input type="text" placeholder="Connection Coordinate" className="w-full font-mono p-2 border border-gray-300 rounded mb-2" value={connectionCoordinate} onChange={(e) => setConnectionCoordinate(e.target.value)} />
                 <input type="text" placeholder="Substation Coordinate" className="w-full font-mono p-2 border border-gray-300 rounded mb-2" value={substationCoordinate} onChange={(e) => setSubstationCoordinate(e.target.value)} />
-
+                <input type="text" placeholder="Completion Date" className="w-full font-mono p-2 border border-gray-300 rounded mb-2" value={completionDate} onChange={(e) => setCompletionDate(e.target.value)} />
                 <div className="flex justify-end space-x-2">
                     <button onClick={() => setIsGroupModalOpen(false)} className="bg-gray-100 font-mono hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-xl">Cancel</button>
                     <button onClick={handleCreateGroup} className="bg-dark-green font-mono hover:bg-text-green text-white px-4 py-2 rounded-xl">Create Group</button>
