@@ -174,7 +174,8 @@ export default function Dashboard() {
           )
         }
         generateGeoPoint(data.data.metadata.location, data.data._id);
- 
+        
+        router.push("/groups")
  
       } catch (error) {
         console.error('Error creating project', error);

@@ -8,11 +8,15 @@ const GroupSchema = new Schema(
     },
     connectionCoordinate: {
       type: String, 
-      required: true,
+      // required: true,
     },
     substationCoordinate: {
       type: String, 
       required: true,
+    },
+    completionDate: {
+      type: String, 
+      // required: true,
     },
     projects: {
       type: Array,
@@ -26,9 +30,13 @@ const GroupSchema = new Schema(
       type: Array,
       default: [],
     },
-    maxCapacity: {
+    capacityLeft: {
       type: Number,
-      default: 1500,
+      default: 0,
+    },
+    isPotential: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }
